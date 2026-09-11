@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BJJ Positional State Machine</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    darkMode: 'class',
+    theme: {
+      extend: {
+        fontFamily: {
+          mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Consolas', '"Liberation Mono"', 'monospace'],
+        },
+      },
+    },
+  };
+</script>
+<style>
+  html { color-scheme: dark; }
+  body { background: #0f172a; }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: #0f172a; }
+  ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+  .grid-bg {
+    background-image:
+      linear-gradient(rgba(148,163,184,0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(148,163,184,0.05) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+  .fade-in { animation: fadeIn .18s ease-out; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+  .drawer { transition: transform .22s ease-out; }
+  .reveal-body { transition: opacity .15s ease-out; }
+  [hidden] { display: none !important; }
+  .fam-guards { --accent: #34d399; }
+  .fam-pins   { --accent: #fbbf24; }
+  .fam-back   { --accent: #fb7185; }
+  .fam-legs   { --accent: #38bdf8; }
+  .fam-hub    { --accent: #a78bfa; }
+  .accent-border { border-color: var(--accent); }
+  .accent-text { color: var(--accent); }
+  .accent-bg { background: var(--accent); }
+  .accent-ring:hover, .accent-ring:focus-visible { box-shadow: 0 0 0 1px var(--accent), 0 0 24px -8px var(--accent); outline: none; }
+  .accent-glow { box-shadow: 0 0 0 1px var(--accent), 0 0 40px -12px var(--accent); }
+  kbd { font-family: inherit; border: 1px solid #475569; border-bottom-width: 2px; border-radius: 3px; padding: 0 5px; font-size: 10px; color: #cbd5e1; }
+</style>
+</head>
+<body class="font-mono text-slate-200 antialiased min-h-screen grid-bg">
+
+<!-- ============ HEADER ============ -->
+<header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-30">
+  <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center gap-3">
+    <div class="flex items-baseline gap-2 mr-auto">
+      <span class="text-slate-500 text-xs">$</span>
+      <h1 class="text-sm sm:text-base font-semibold tracking-widest uppercase text-slate-100">bjj.state_machine</h1>
+      <span class="text-[10px] text-slate-500 hidden sm:inline">// positional hierarchy · submeta model</span>
+    </div>
+    <nav class="flex gap-1 bg-slate-800/70 p-1 rounded border border-slate-700" role="tablist" aria-label="Mode">
+      <button id="tab-roadmap" data-mode="roadmap" role="tab" class="mode-tab px-3 py-1 text-xs uppercase tracking-wider rounded">Roadmap</button>
+      <button id="tab-cards" data-mode="cards" role="tab" class="mode-tab px-3 py-1 text-xs uppercase tracking-wider rounded">Flashcards</button>
+    </nav>
+  </div>
+</header>
+
+<!-- ============ FILTERS ============ -->
+<section class="max-w-7xl mx-auto px-4 pt-4">
+  <div class="flex flex-wrap items-center gap-x-6 gap-y-3">
+    <div class="flex flex-wrap items-center gap-1.5">
+      <span class="text-[10px] uppercase tracking-widest text-slate-500 mr-1">family</span>
+      <div id="family-chips" class="flex flex-wrap gap-1.5"></div>
+    </div>
+    <div class="flex flex-wrap items-center gap-1.5">
+      <span class="text-[10px] uppercase tracking-widest text-slate-500 mr-1">tier</span>
+      <div id="tier-chips" class="flex flex-wrap gap-1.5"></div>
+    </div>
+    <button id="clear-filters" class="text-[10px] uppercase tracking-widest text-slate-500 hover:text-slate-200 underline underline-offset-4 decoration-slate-700" hidden>clear</button>
+    <span id="filter-count" class="text-[10px] text-slate-500 ml-auto"></span>
+  </div>
+</section>
+
+<main class="max-w-7xl mx-auto px-4 py-6">
+
+  <!-- ============ ROADMAP VIEW ============ -->
+  <section id="view-roadmap" class="space-y-8"></section>
+
+  <!-- ============ FLASHCARD VIEW ============ -->
+  <section id="view-cards" hidden>
+    <div class="grid lg:grid-cols-[1fr_280px] gap-6 items-start">
+
+      <div class="space-y-4">
+        <div id="deck-status" class="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-slate-400"></div>
+
+        <article id="flashcard" class="rounded-lg border border-slate-700 bg-slate-900/90 p-5 sm:p-7 fade-in accent-glow">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <div id="fc-badges" class="flex flex-wrap items-center gap-2 mb-2"></div>
+              <h2 id="fc-name" class="text-xl sm:text-2xl font-semibold tracking-tight text-slate-50"></h2>
+              <p id="fc-summary" class="text-xs sm:text-sm text-slate-400 mt-2 leading-relaxed"></p>
+            </div>
+            <button id="fc-open-node" class="shrink-0 text-[10px] uppercase tracking-widest text-slate-500 hover:text-slate-200 border border-slate-700 rounded px-2 py-1">map ↗</button>
+          </div>
+
+          <div id="fc-sections" class="mt-6 space-y-3"></div>
+
+          <div class="mt-6 flex flex-wrap items-center gap-2">
+            <button id="fc-reveal-all" class="text-xs uppercase tracking-wider px-3 py-2 rounded border border-slate-600 hover:border-slate-400 text-slate-300">reveal all <kbd>space</kbd></button>
+            <div class="ml-auto flex gap-2">
+              <button id="fc-review" class="text-xs uppercase tracking-wider px-4 py-2 rounded border border-rose-500/60 text-rose-300 hover:bg-rose-500/10">needs review <kbd>2</kbd></button>
+              <button id="fc-got" class="text-xs uppercase tracking-wider px-4 py-2 rounded border border-emerald-500/60 text-emerald-300 hover:bg-emerald-500/10">got it <kbd>1</kbd></button>
+            </div>
+          </div>
+        </article>
+
+        <div id="deck-empty" class="rounded-lg border border-dashed border-slate-700 p-8 text-center text-sm text-slate-500" hidden>
+          no cards match the current filters.
+        </div>
+      </div>
+
+      <aside class="space-y-4">
+        <div class="rounded-lg border border-slate-800 bg-slate-900/70 p-4">
+          <h3 class="text-[10px] uppercase tracking-widest text-slate-500 mb-3">session</h3>
+          <dl id="session-stats" class="grid grid-cols-3 gap-2 text-center"></dl>
+        </div>
+
+        <div class="rounded-lg border border-slate-800 bg-slate-900/70 p-4">
+          <h3 class="text-[10px] uppercase tracking-widest text-slate-500 mb-3">retention · deck</h3>
+          <div id="box-bars" class="space-y-1.5"></div>
+          <p class="text-[10px] text-slate-600 mt-3 leading-relaxed">leitner boxes. "got it" promotes a card one box and pushes it further down the queue; "needs review" drops it to box 0 and brings it back within two cards.</p>
+        </div>
+
+        <div class="rounded-lg border border-slate-800 bg-slate-900/70 p-4">
+          <h3 class="text-[10px] uppercase tracking-widest text-slate-500 mb-3">hide by default</h3>
+          <div id="hide-toggles" class="space-y-2"></div>
+        </div>
+
+        <button id="reset-progress" class="w-full text-[10px] uppercase tracking-widest text-slate-500 hover:text-rose-300 border border-slate-800 hover:border-rose-500/50 rounded px-3 py-2">reset progress</button>
+      </aside>
+    </div>
+  </section>
+</main>
+
+<!-- ============ DRAWER ============ -->
+<div id="drawer-backdrop" class="fixed inset-0 bg-slate-950/70 z-40" hidden></div>
+<aside id="drawer" class="drawer fixed z-50 inset-y-0 right-0 w-full sm:max-w-lg bg-slate-900 border-l border-slate-700 overflow-y-auto translate-x-full" aria-label="Position detail" aria-hidden="true">
+  <div id="drawer-content" class="p-5 sm:p-6"></div>
+</aside>
+
+<footer class="max-w-7xl mx-auto px-4 pb-8 text-[10px] text-slate-600 flex flex-wrap gap-x-4 gap-y-1">
+  <span>tier = control vector (0 neutral → 5 ultimate).</span>
+  <span>family = the four submeta position families + the turtle/standing hub.</span>
+  <span>keys: <kbd>space</kbd> reveal · <kbd>1</kbd> got it · <kbd>2</kbd> review · <kbd>esc</kbd> close</span>
+</footer>
+
+<script>
+// =====================================================================
+// DATA
+// =====================================================================
+const FAMILIES = {
+  guards: { label: 'Guards', cls: 'fam-guards', desc: 'Bottom player has legs between self and opponent. Retain, off-balance, sweep, submit, or enter legs.' },
+  pins:   { label: 'Pins', cls: 'fam-pins', desc: 'Top player past the legs with chest connection. Cook pressure, isolate limbs, promote up the hierarchy.' },
+  back:   { label: 'Back', cls: 'fam-back', desc: 'Behind the opponent. Highest control, highest submission rate. The end state of the hierarchy.' },
+  legs:   { label: 'Leg Entanglements', cls: 'fam-legs', desc: 'Asymmetric high-threat zone. Whoever controls the knee line and exposes a heel wins.' },
+  hub:    { label: 'Hub', cls: 'fam-hub', desc: 'Transitional states: standing and turtle. Nobody stays here; both players are choosing where to go.' },
+};
+
+const TIERS = [
+  { n: 0, label: 'Neutral / Standing', desc: 'Takedown, pull guard, or wrestle up. No control established yet.' },
+  { n: 1, label: 'Dynamic Guards', desc: 'Bottom: retain, kuzushi, sweep, back take, leg entry. Top: deny inside position, clear wedges, bypass the knee line, pass to a pin.' },
+  { n: 2, label: 'Leg Entanglements', desc: 'Attacker: control the knee line, rotate the heel, isolate the sub or sweep to a pin. Defender: clear the knee line, hide the heel, rotate out, re-engage guard.' },
+  { n: 3, label: 'Upper-Body Pins & Turtle', desc: 'Top: cook weight, isolate frames, crossface, advance to Mount or Back. Bottom: frames, elbow-knee connection, shrimp back to Guard or turn to Turtle and wrestle up.' },
+  { n: 4, label: 'Dominant Finish Pins', desc: 'Top: smother, climb knees to armpits, isolate arms, or go to Back. Bottom: elbow-knee escape, kipping escape, trap-and-roll back to Guard.' },
+  { n: 5, label: 'Ultimate Control', desc: 'Top: seatbelt, trap an arm, hunt the strangle. Bottom: protect the neck, clear hooks, get shoulders and hips to the mat, rotate back into Guard.' },
+];
+
+// route steps: plain strings are actions; strings starting with "@" reference a node id.
+const NODES = [
+  {
+    id: 'standing', name: 'Standing / Neutral', family: 'hub', tier: 0,
+    topLabel: 'Attacking', bottomLabel: 'Defending',
+    summary: 'Both athletes upright, no grips committed. Everything downstream starts here. Modern no-gi treats this as a decision: take them down, or pull guard on your own terms before they can pass standing.',
+    top: 'Win inside position on the tie-ups (inside wrist control, collar tie with your forehead under their chin). Level change to a double or single leg, or snap them down to a front headlock. Land past the guard or on top of turtle, never inside their guard.',
+    bottom: 'If you are the guard player, do not get taken down: grip first, then sit to butterfly or seated guard with your feet inside their knees. If they disengage from your guard, stand and wrestle up rather than sitting still.',
+    dangers: 'Guillotine and front headlock off a bad level change. Getting snapped down to turtle. Guard pull with no grip lets them start passing before you have hooks.',
+    wedge: 'Inside position on the arms (your wrists inside theirs). Head position: forehead under the chin on every shot. If you sit, feet inside the knee line immediately.',
+    topRoute: ['Grip fight to inside position', 'Takedown / snap-down', '@turtle', '@side-control', '@back-control'],
+    bottomRoute: ['Grip first', 'Sit to guard', '@butterfly', 'Sweep', '@mount'],
+    topNext: ['turtle', 'side-control', 'half-guard'], bottomNext: ['butterfly', 'slx', 'closed-guard'],
+  },
+  {
+    id: 'closed-guard', name: 'Closed Guard', family: 'guards', tier: 1,
+    topLabel: 'Top (passing)', bottomLabel: 'Bottom (guard)',
+    summary: 'Bottom player locks ankles around the top player\'s waist. The one guard that fully denies the pass until the lock is broken. Bottom wants to break posture; top wants to stand and open.',
+    top: 'Posture: head up, hips forward, hands posted on the sternum or hip. Stand or use a knee wedge in the tailbone to break the lock. Once open, cut straight to Half Guard (knee cut) or bypass the knee line into Side Control. Never dive an arm across the centre line.',
+    bottom: 'Break posture (pull the head down, climb legs high, angle your hips off centre). Attack the armbar, triangle, or kimura, or hip bump / scissor sweep straight to Mount. Arm drag for the Back. If they stand and open, convert to Butterfly or SLX instead of clinging.',
+    dangers: 'Top player: triangle, armbar, kimura, guillotine the moment posture breaks. Bottom player: very little submission risk, but stacking and can-openers punish a lazy lock.',
+    wedge: 'Bottom: the ankle lock itself plus a 45° hip angle so one knee frames the chest. Top: a straight-arm post on the sternum or hip that stops the pull, and a knee driven into the tailbone to break the lock.',
+    topRoute: ['Posture up', 'Break the lock', 'Knee cut', '@half-guard', '@side-control'],
+    bottomRoute: ['Break posture', 'Hip bump / scissor sweep', '@mount', 'or: arm drag', '@back-control'],
+    topNext: ['half-guard', 'side-control'], bottomNext: ['mount', 'back-control', 'ashi'],
+  },
+  {
+    id: 'half-guard', name: 'Half Guard (Knee Shield)', family: 'guards', tier: 1,
+    topLabel: 'Top (passing)', bottomLabel: 'Bottom (guard)',
+    summary: 'Bottom player traps one leg between theirs and frames a knee shield across the chest. The default position both players fall into after a half-finished pass. The whole fight is over the underhook and the knee shield.',
+    top: 'Kill the knee shield (drive it flat or pass over/under it), take the crossface and the underhook, flatten them out, then free the trapped knee with a knee cut or back step. Promote to Side Control or slide straight to Mount.',
+    bottom: 'Stay on your side, never flat. Knee shield manages distance. Win the underhook and come up on a wrestle-up (dogfight) to the top, or drop under to deep half / SLX / Ashi for a sweep. If they clear the shield, retreat to Butterfly.',
+    dangers: 'Bottom: getting flattened by the crossface; the guillotine and darce when you turn in for the underhook. Top: kimura from the bottom, and giving up your back through the underhook.',
+    wedge: 'Bottom: shin across the chest (knee shield) with the elbow-knee connection so the frame is skeletal, not muscular. Top: crossface arm plus underhook, chest heavy, the classic shoulder-pressure wedge.',
+    topRoute: ['Crossface, flatten', 'Kill the knee shield', 'Knee cut / back step', '@side-control', '@mount'],
+    bottomRoute: ['Knee shield', 'Win the underhook', 'Wrestle-up (dogfight)', 'Top position', 'or: drop under', '@slx', 'Sweep'],
+    topNext: ['side-control', 'mount'], bottomNext: ['slx', 'ashi', 'butterfly', 'turtle'],
+  },
+  {
+    id: 'butterfly', name: 'Butterfly Guard', family: 'guards', tier: 1,
+    topLabel: 'Top (passing)', bottomLabel: 'Bottom (guard)',
+    summary: 'Seated with both insteps hooked inside the opponent\'s thighs. The primary inside-position guard in no-gi: elevation sweeps, arm drags, and entries into the legs.',
+    top: 'Deny the hooks: pin the knees together, back step, or bodylock and drive them flat. Float over the knee line with the head low and elbows tight. Pass to Side Control, or settle for Half Guard and work from there.',
+    bottom: 'Grip (underhook, collar tie, or wrist), off-balance them with the hooks, and elevate: sweep to Mount or top Half. Arm drag to the Back. If they stand up out of the hooks, convert to SLX or Ashi rather than chasing.',
+    dangers: 'Top: being elevated and swept, guillotine if you drop your head. Bottom: getting flattened out and bodylock passed; feet crossed under the opponent.',
+    wedge: 'Bottom: insteps hooked under both thighs, hips off the mat, torso angled. Top: elbows glued to the ribs and chest heavy so there is no space for the hook to lift.',
+    topRoute: ['Pin the knees / bodylock', 'Float over the knee line', '@half-guard', '@side-control'],
+    bottomRoute: ['Grip + hooks', 'Kuzushi (off-balance)', 'Elevate & sweep', '@mount', 'or: they stand', '@slx'],
+    topNext: ['half-guard', 'side-control'], bottomNext: ['mount', 'slx', 'ashi', 'back-control'],
+  },
+  {
+    id: 'slx', name: 'Single Leg X (SLX) / Seated Guard', family: 'guards', tier: 2,
+    topLabel: 'Top (clearing)', bottomLabel: 'Bottom (entangling)',
+    summary: 'Seated guard where one leg hooks outside their hip with the other foot on the far hip. It sits on the border between open guard and leg entanglements: still a guard, but it already controls the knee line, so it is scored as Tier 2.',
+    top: 'Clear the knee line: drive your trapped knee across their body, pin their outside hook down, and free the leg. Back step out, or stay low and pass into Half Guard or Side Control before they can lift you.',
+    bottom: 'Lift the far hip with your foot to off-balance them. Sweep to the top with a technical stand-up, or slide the outside hook down into Straight Ashi for the ankle or heel. Scoot under for the Back if they turn away.',
+    dangers: 'Top: straight ankle lock, sweep, heel hook if they roll under. Bottom: getting stacked or back stepped, crossed feet, giving up the knee line.',
+    wedge: 'Bottom: outside leg hooked over their hip with your knee inside their knee line; foot planted on the far hip; grip on the heel. Top: your knee pinned across to the mat and hips low.',
+    topRoute: ['Drive knee across (clear knee line)', 'Free the trapped leg', '@half-guard', '@side-control'],
+    bottomRoute: ['Lift the far hip', 'Technical stand-up sweep', '@mount', 'or: hook slides down', '@ashi'],
+    topNext: ['half-guard', 'side-control'], bottomNext: ['ashi', 'mount', 'back-control'],
+  },
+  {
+    id: 'ashi', name: 'Straight Ashi Garami', family: 'legs', tier: 2,
+    topLabel: 'Attacker', bottomLabel: 'Defender',
+    summary: 'Single-leg entanglement: their leg trapped between your thighs, your outside leg hooked over the hip, your inside foot on the hip. The starting point of the leg game. Straight ankle lock is the finish; rotation opens the inside heel hook.',
+    top: 'Pinch your knees to own the knee line. Isolate the heel on your chest, extend your hips for the straight ankle. If they stand, sweep them to the mat or upgrade: cross the far leg into Inside Sankaku, or accept 50/50 if they counter-entangle.',
+    bottom: 'Clear the knee line first: drive your trapped knee through their thighs, or bring their knee across your body. Hide the heel (toes pointed, boot the foot). Rotate toward your trapped knee and come up on top, or sit back into Butterfly.',
+    dangers: 'Defender: straight ankle lock, inside heel hook (with rotation), and getting swept into a pin. Attacker: losing the knee line means they pass straight into Side Control.',
+    wedge: 'Knee-line control: their knee pinched between your thighs. Foot on the hip as the pushing lever. Heel isolated on the chest, not the armpit.',
+    topRoute: ['Pinch the knee line', 'Isolate the heel', 'Straight ankle lock', 'or: cross the far leg', '@inside-sankaku'],
+    bottomRoute: ['Clear the knee line', 'Hide the heel', 'Rotate toward the trapped knee', 'Come up on top', '@side-control'],
+    topNext: ['inside-sankaku', 'fifty-fifty', 'side-control'], bottomNext: ['butterfly', 'half-guard', 'side-control'],
+  },
+  {
+    id: 'inside-sankaku', name: 'Inside Sankaku (411 / Honey Hole)', family: 'legs', tier: 2,
+    topLabel: 'Attacker', bottomLabel: 'Defender',
+    summary: 'Your legs triangled around one of their thighs from the inside. The most dominant leg entanglement in no-gi: the knee line is locked shut and the inside heel hook is the primary finish.',
+    top: 'Lock the triangle so the knee line cannot be cleared. Hide their far leg inside your entanglement. Turn toward the trapped heel to expose it and finish the inside heel hook. If they roll out, follow to Back Control or a pin.',
+    bottom: 'Do not let them turn your heel: point the toes, boot the foot with your free leg, and drive your knee through. Follow the knee (rotate in the direction your trapped knee points) to relieve torque, clear, and come up on top.',
+    dangers: 'Defender: inside heel hook (career-altering), knee bar, straight ankle. Attacker: little, but a defender who frees the knee line ends up on top in Side Control.',
+    wedge: 'The triangle around the thigh, locked above the knee. Their far leg hidden inside. Your top knee pinning their hip so they cannot square up.',
+    topRoute: ['Lock the triangle', 'Hide the far leg', 'Turn toward the heel', 'Inside heel hook', 'or: they roll', '@back-control'],
+    bottomRoute: ['Hide the heel / boot', 'Follow the knee', 'Drive knee through', 'Come up on top', '@half-guard'],
+    topNext: ['ashi', 'back-control', 'side-control'], bottomNext: ['half-guard', 'side-control'],
+  },
+  {
+    id: 'fifty-fifty', name: '50/50', family: 'legs', tier: 2,
+    topLabel: 'Attacker', bottomLabel: 'Defender',
+    summary: 'Both players hold the same single-leg entanglement on each other. Fully symmetric and dangerous for both: whoever exposes the other\'s heel first wins. Under IBJJF rules it is a stalling swamp; in no-gi it is a heel hook race.',
+    top: 'Win the heel: hide your own (turn away, knee pinched, toes pointed), pull theirs across your body and finish the outside heel hook. If the finish is not there, off-balance to the top position or convert to Inside Sankaku.',
+    bottom: 'Hide the heel first, then post and come up on top before they do. Do not sit and fight symmetrically. Use the free hand to push their knee and exit back into Straight Ashi or Half Guard.',
+    dangers: 'Both: outside heel hook, straight ankle, knee bar. Top-position advantage decides who gets to attack.',
+    wedge: 'Your knee pinched over their knee (knee-line dominance), your heel hidden behind your own hip, a hand controlling their foot.',
+    topRoute: ['Hide your heel', 'Expose their heel', 'Outside heel hook', 'or: come up on top', '@side-control'],
+    bottomRoute: ['Hide the heel', 'Post and stand', 'Top position', 'or: exit', '@ashi'],
+    topNext: ['inside-sankaku', 'ashi', 'side-control'], bottomNext: ['ashi', 'half-guard'],
+  },
+  {
+    id: 'side-control', name: 'Side Control', family: 'pins', tier: 3,
+    topLabel: 'Top (pinning)', bottomLabel: 'Bottom (escaping)',
+    summary: 'Top player chest-to-chest across the bottom player\'s torso, past the legs. The base pin off any successful pass. Bottom is not in immediate submission danger but every wrong move opens one.',
+    top: 'Crossface plus underhook. Kill the near frame by getting hip to hip. Cook pressure until they turn, then promote: Knee on Belly to open reactions, North-South to attack arms, Mount if they go flat, Back if they turn away.',
+    bottom: 'Frames first: forearm across the neck or shoulder, elbow-knee connection on the near side. Shrimp (hip escape) to reinsert a knee and recover Half or Closed Guard. If they cook too hard, turn to your knees into Turtle and wrestle up.',
+    dangers: 'Bottom: arm triangle (kata gatame), americana, kimura, darce when you turn in. Top: being reversed if your base is high or your hips float.',
+    wedge: 'Bottom: near-side frame, forearm across the throat line and elbow pinned to your own hip, to block the crossface. Top: crossface arm plus a hip block so the shrimp goes nowhere.',
+    topRoute: ['Crossface + underhook', 'Kill the near frame', 'Cook pressure', '@knee-on-belly', '@mount'],
+    bottomRoute: ['Build frames', 'Shrimp', 'Reinsert knee', '@half-guard', 'or: turn to knees', '@turtle'],
+    topNext: ['knee-on-belly', 'north-south', 'mount', 'back-control'], bottomNext: ['half-guard', 'closed-guard', 'turtle', 'butterfly'],
+  },
+  {
+    id: 'north-south', name: 'North-South', family: 'pins', tier: 3,
+    topLabel: 'Top (pinning)', bottomLabel: 'Bottom (escaping)',
+    summary: 'Top player above the head, chest over the face, hips controlling the arms. Reached by rotating around Side Control when they push. Excellent for arm attacks and the north-south choke.',
+    top: 'Sink your hips into their armpits, control both arms. Attack the kimura, the north-south choke, or rotate back to Side Control and Mount as they bridge.',
+    bottom: 'Forearms into the hip creases, elbows tight. Tuck and turn: circle your knees toward your elbows and come up into Turtle, or drop a knee in to recover Half Guard. Never push up with straight arms.',
+    dangers: 'Bottom: north-south choke, kimura, darce, armbar the moment you push. Top: losing them to Turtle if your hips float.',
+    wedge: 'Bottom: forearms wedged into the hip creases, elbows glued to the ribs. Top: hips over the head, arms locked into the armpits.',
+    topRoute: ['Sink hips', 'Control both arms', 'Kimura / N-S choke', 'or: rotate', '@side-control', '@mount'],
+    bottomRoute: ['Forearms in the hips', 'Tuck and turn', '@turtle', 'or: knee in', '@half-guard'],
+    topNext: ['side-control', 'mount', 'back-control'], bottomNext: ['turtle', 'half-guard'],
+  },
+  {
+    id: 'knee-on-belly', name: 'Knee on Belly', family: 'pins', tier: 3,
+    topLabel: 'Top (pinning)', bottomLabel: 'Bottom (escaping)',
+    summary: 'Top player\'s shin across the belly, other leg posted wide. A mobile, high-pressure pin used to force reactions: whichever way they turn, something opens.',
+    top: 'Drive weight through the knee, control the collar or wrist. They push the knee: armbar. They turn in: slide the knee across to Mount. They turn away: take the Back. Stay light on the posted foot so you can move.',
+    bottom: 'Frame on the knee and hip with bent arms, shrimp away and reinsert your knee to recover guard. Or turn to Turtle and wrestle up. Never push with a straight arm.',
+    dangers: 'Bottom: armbar (from pushing the knee), baseball-bat choke (gi), arm triangle, back exposure. Top: getting swept if the posted foot is too close.',
+    wedge: 'Bottom: forearm across the shin, elbow-knee connection on the near side. Top: shin from sternum to hip, weight on the knee, not the foot.',
+    topRoute: ['Weight through the knee', 'Force a reaction', '@mount', 'or: they turn away', '@back-control'],
+    bottomRoute: ['Frame knee + hip', 'Shrimp out', 'Reinsert knee', '@half-guard', 'or: turn', '@turtle'],
+    topNext: ['mount', 'back-control', 'side-control'], bottomNext: ['half-guard', 'butterfly', 'turtle'],
+  },
+  {
+    id: 'mount', name: 'Full Mount', family: 'pins', tier: 4,
+    topLabel: 'Top (finishing)', bottomLabel: 'Bottom (escaping)',
+    summary: 'Top player sits on the torso with both knees on the mat. Bottom faces up with almost no offence. Top wants to climb high and isolate arms; bottom wants to get a knee back in.',
+    top: 'Smother: chest low, hips heavy, knees pinched. Climb the knees toward the armpits (high mount) to kill the frames, then isolate an arm: armbar, arm triangle, or S-Mount for the armbar. If they turn to a side, take the Back.',
+    bottom: 'Elbow-knee escape: frame at the hip line, shrimp, and slide a knee in to recover Half Guard. Trap-and-roll (upa) when they post a hand. Kipping escape against high mount. Never turn belly down.',
+    dangers: 'Bottom: armbar, arm triangle, ezekiel, cross-collar (gi); back exposure if you turn away. Top: minimal.',
+    wedge: 'Bottom: elbows tight to the ribs, frames at their hip line, one foot on the mat to bridge. Top: hips heavy, knees pinched, hands posted at their head.',
+    topRoute: ['Smother', 'Climb knees to armpits', 'Isolate an arm', '@s-mount', 'Armbar / or: they turn', '@back-control'],
+    bottomRoute: ['Frame at the hip line', 'Elbow-knee escape', '@half-guard', 'Knee shield', 'Sweep or wrestle-up'],
+    topNext: ['s-mount', 'back-control'], bottomNext: ['half-guard', 'closed-guard', 'turtle'],
+  },
+  {
+    id: 's-mount', name: 'S-Mount', family: 'pins', tier: 4,
+    topLabel: 'Top (finishing)', bottomLabel: 'Bottom (escaping)',
+    summary: 'High mount where one leg folds under their armpit and the other knee sits behind their head, forming an S. The armbar position: the arm is already isolated and the back is one turn away.',
+    top: 'Pin the arm across your hip, keep the knee behind the head. Swing the far leg over for the armbar or fall to the mounted triangle. If they turn away to escape, drop to Back Control.',
+    bottom: 'Protect the arm: hands clasped, elbow to the ribs, thumb down. Bridge hard into the far side to knock them off balance, then turn into them (never away) and recover Half Guard.',
+    dangers: 'Bottom: armbar, mounted triangle, arm triangle. Top: losing base on the bridge and giving up Half Guard.',
+    wedge: 'Top: knee behind the head, shin across the shoulder, arm pinned to your hip. Bottom: elbows glued to the ribs, hands locked together.',
+    topRoute: ['Isolate the arm', 'Knee behind the head', 'Swing leg over', 'Armbar / or: they turn', '@back-control'],
+    bottomRoute: ['Protect the arm', 'Bridge to the far side', 'Turn into them', '@half-guard'],
+    topNext: ['back-control', 'mount'], bottomNext: ['half-guard', 'mount'],
+  },
+  {
+    id: 'back-control', name: 'Back Control (Seatbelt + Hooks)', family: 'back', tier: 5,
+    topLabel: 'Top (attacking)', bottomLabel: 'Bottom (escaping)',
+    summary: 'Behind the opponent with both hooks inside their thighs and a seatbelt grip. The highest-scoring and highest-finishing position in the sport. Chest to back, and the rear naked choke is the objective.',
+    top: 'Seatbelt: choking arm over the shoulder, other arm under the armpit, hands hidden. Stay chest to back. Trap an arm with your leg, then hunt the rear naked choke. Switch the hooks to a body triangle for a slower, tighter control.',
+    bottom: 'Chin down, two hands on the choking arm. Fall to the weak side (the choking-arm side), clear the bottom hook with your hand, slide your hips and shoulders to the mat, then rotate into them and recover Half or Closed Guard.',
+    dangers: 'Bottom: rear naked choke, bow-and-arrow (gi), armbar off the shoulder. Top: minimal; losing the position is the only cost.',
+    wedge: 'Top: seatbelt plus hooks inside the thighs, chest glued to the back. Bottom: two-on-one grip on the choking hand and an elbow blocking the underhook side.',
+    topRoute: ['Seatbelt', 'Chest to back', 'Trap an arm', 'Rear naked choke', 'or: tighten', '@body-triangle'],
+    bottomRoute: ['Protect the neck', 'Fall to the weak side', 'Clear the bottom hook', 'Shoulders to the mat', '@half-guard'],
+    topNext: ['body-triangle', 'back-mount-belly'], bottomNext: ['half-guard', 'closed-guard', 'turtle'],
+  },
+  {
+    id: 'body-triangle', name: 'Straight Body Triangle', family: 'back', tier: 5,
+    topLabel: 'Top (attacking)', bottomLabel: 'Bottom (escaping)',
+    summary: 'Legs figure-four locked around their waist from the back instead of hooks. Slower for them to escape and brutal on the ribs, but your locked foot is exposed to a footlock counter.',
+    top: 'Lock the triangle on the choking-arm side. Keep chest to back and the seatbelt. Rear naked choke, or the armbar as they defend. If they turn toward the locked knee, switch back to hooks before they attack the foot.',
+    bottom: 'Turn toward the locked knee (the open side) to kill the squeeze. Attack the exposed foot as a counter, or trap it and shoulder-walk your hips to the mat and rotate into Half Guard.',
+    dangers: 'Bottom: rear naked choke, arm triangle. Top: footlock counter on the locked ankle if you stay too long.',
+    wedge: 'Top: top leg across their thigh, foot locked behind your other knee, chest to back. Bottom: elbow blocking the underhook side, hips turning toward the locked foot.',
+    topRoute: ['Lock the triangle', 'Seatbelt', 'Rear naked choke', 'or: they turn', '@back-control'],
+    bottomRoute: ['Turn toward the locked knee', 'Shoulder-walk to the mat', 'Rotate in', '@half-guard'],
+    topNext: ['back-control', 'back-mount-belly'], bottomNext: ['half-guard', 'turtle'],
+  },
+  {
+    id: 'back-mount-belly', name: 'Back Mount (Belly Down)', family: 'back', tier: 5,
+    topLabel: 'Top (attacking)', bottomLabel: 'Bottom (escaping)',
+    summary: 'Opponent flat on their stomach with you on top, hooks in or riding their back. They have zero offence; you have the neck, both arms, and all the time in the world.',
+    top: 'Keep the hooks and the harness, hips behind their hips. Hunt the rear naked choke, bow-and-arrow (gi), or crucifix. If they turtle up, break them back down; do not let them build height.',
+    bottom: 'Get your elbows and knees under you (Turtle base), chin tucked. Clear the hook closest to the mat with your hand, then roll toward that side to recover Guard. Do not lie flat and wait.',
+    dangers: 'Bottom: rear naked choke, armbar, crucifix. Top: minimal.',
+    wedge: 'Top: hips behind their hips, knees wide, hooks in. Bottom: elbows to the ribs, chin tucked, knees under the hips.',
+    topRoute: ['Hooks + harness', 'Hips behind hips', 'Rear naked choke', 'or: they rise', '@back-control'],
+    bottomRoute: ['Elbows and knees under', '@turtle', 'Clear the low hook', 'Roll to guard', '@half-guard'],
+    topNext: ['back-control', 'body-triangle'], bottomNext: ['turtle', 'half-guard'],
+  },
+  {
+    id: 'turtle', name: 'Turtle', family: 'hub', tier: 3,
+    topLabel: 'Top (attacking)', bottomLabel: 'Bottom (turtled)',
+    summary: 'On hands and knees, elbows tight. A transitional hub: nobody can pin you there, but the Back is one hook away. The bottom player decides between wrestling up and sitting to Guard.',
+    top: 'Chest to back, knee wedged into their hip. Insert a hook and seatbelt for the Back take. If they block the hooks, break them down to Side Control with a clock choke or crucifix threat.',
+    bottom: 'Protect the neck and block the hooks with elbows and hands. Wrestle up (sit-out, Granby roll) to standing, or turn into them with a shoulder roll to sit into Butterfly or Half Guard. Do not stay.',
+    dangers: 'Bottom: back take, clock choke, crucifix, anaconda or darce if you lift the head. Top: losing them to a wrestle-up if your hips are too high.',
+    wedge: 'Bottom: elbow-knee connection, chin tucked, hands blocking the hip line. Top: seatbelt and knee wedge against their hip.',
+    topRoute: ['Chest to back', 'Knee in the hip', 'Insert a hook', '@back-control'],
+    bottomRoute: ['Block the hooks', 'Sit-out / Granby', '@standing', 'or: shoulder roll', '@butterfly'],
+    topNext: ['back-control', 'side-control'], bottomNext: ['half-guard', 'butterfly', 'standing'],
+  },
+];
+
+const NODE_BY_ID = Object.fromEntries(NODES.map(n => [n.id, n]));
+
+const SECTIONS = [
+  { key: 'top', label: 'Top objective', hint: 'what to go for next', field: 'top', labelField: 'topLabel' },
+  { key: 'bottom', label: 'Bottom objective', hint: 'survival & recovery pathway', field: 'bottom', labelField: 'bottomLabel' },
+  { key: 'dangers', label: 'Primary danger', hint: 'submission threats', field: 'dangers' },
+  { key: 'wedge', label: 'Key wedge / frame', hint: 'geometry to look for', field: 'wedge' },
+];
+
+// =====================================================================
+// STATE
+// =====================================================================
+const SRS_KEY = 'bjj-state-machine.srs.v1';
+const PREF_KEY = 'bjj-state-machine.prefs.v1';
+const INTERVALS = [1, 3, 6, 12, 24]; // cards until a box-N card is due again
+
+const state = {
+  mode: 'roadmap',
+  families: new Set(),
+  tiers: new Set(),
+  currentId: null,
+  revealed: new Set(),
+  session: { shown: 0, got: 0, review: 0 },
+  srs: loadJSON(SRS_KEY, { counter: 0, cards: {} }),
+  prefs: loadJSON(PREF_KEY, { hidden: { top: true, bottom: true, dangers: true, wedge: true }, mode: 'roadmap' }),
+};
+state.mode = state.prefs.mode || 'roadmap';
+
+function loadJSON(key, fallback) {
+  try { const v = localStorage.getItem(key); return v ? { ...fallback, ...JSON.parse(v) } : fallback; }
+  catch { return fallback; }
+}
+function saveJSON(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); } catch {} }
+
+function cardState(id) {
+  if (!state.srs.cards[id]) state.srs.cards[id] = { box: 0, due: 0, seen: 0, correct: 0 };
+  return state.srs.cards[id];
+}
+
+// =====================================================================
+// FILTERING
+// =====================================================================
+function filteredNodes() {
+  return NODES.filter(n =>
+    (state.families.size === 0 || state.families.has(n.family)) &&
+    (state.tiers.size === 0 || state.tiers.has(n.tier))
+  );
+}
+
+function renderChips() {
+  const fam = document.getElementById('family-chips');
+  fam.innerHTML = '';
+  for (const [id, f] of Object.entries(FAMILIES)) {
+    const on = state.families.has(id);
+    const b = el('button', `${f.cls} chip text-[11px] px-2.5 py-1 rounded border transition ${on ? 'accent-border accent-text bg-slate-800' : 'border-slate-700 text-slate-400 hover:text-slate-200 hover:border-slate-500'}`, f.label);
+    b.setAttribute('aria-pressed', on);
+    b.onclick = () => { toggle(state.families, id); rerender(); };
+    fam.appendChild(b);
+  }
+  const tier = document.getElementById('tier-chips');
+  tier.innerHTML = '';
+  for (const t of TIERS) {
+    const on = state.tiers.has(t.n);
+    const b = el('button', `text-[11px] px-2.5 py-1 rounded border transition ${on ? 'border-slate-200 text-slate-100 bg-slate-800' : 'border-slate-700 text-slate-400 hover:text-slate-200 hover:border-slate-500'}`, `T${t.n}`);
+    b.title = t.label;
+    b.setAttribute('aria-pressed', on);
+    b.onclick = () => { toggle(state.tiers, t.n); rerender(); };
+    tier.appendChild(b);
+  }
+  const any = state.families.size || state.tiers.size;
+  document.getElementById('clear-filters').hidden = !any;
+  document.getElementById('filter-count').textContent = `${filteredNodes().length} / ${NODES.length} positions`;
+}
+function toggle(set, v) { set.has(v) ? set.delete(v) : set.add(v); }
+
+// =====================================================================
+// ROADMAP
+// =====================================================================
+function renderRoadmap() {
+  const root = document.getElementById('view-roadmap');
+  root.innerHTML = '';
+  const visible = filteredNodes();
+  for (const t of TIERS) {
+    const nodes = visible.filter(n => n.tier === t.n);
+    if (!nodes.length) continue;
+    const section = el('div', 'fade-in');
+    section.innerHTML = `
+      <div class="flex items-baseline gap-3 mb-3">
+        <span class="text-[10px] tracking-widest text-slate-500 border border-slate-700 rounded px-1.5 py-0.5">T${t.n}</span>
+        <h2 class="text-sm uppercase tracking-widest text-slate-200">${t.label}</h2>
+        <span class="h-px flex-1 bg-slate-800"></span>
+      </div>
+      <p class="text-[11px] text-slate-500 mb-3 max-w-3xl leading-relaxed">${t.desc}</p>
+      <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"></div>`;
+    const grid = section.querySelector('.grid');
+    for (const n of nodes) grid.appendChild(nodeCard(n));
+    root.appendChild(section);
+  }
+  if (!visible.length) {
+    root.innerHTML = '<div class="rounded-lg border border-dashed border-slate-700 p-8 text-center text-sm text-slate-500">no positions match the current filters.</div>';
+  }
+}
+
+function nodeCard(n) {
+  const f = FAMILIES[n.family];
+  const c = el('button', `${f.cls} accent-ring text-left rounded-lg border border-slate-700 bg-slate-900/80 p-4 transition w-full min-w-0 overflow-hidden`);
+  c.innerHTML = `
+    <div class="flex items-center gap-2 mb-2">
+      <span class="w-1.5 h-1.5 rounded-full accent-bg"></span>
+      <span class="text-[10px] uppercase tracking-widest accent-text">${f.label}</span>
+      <span class="ml-auto text-[10px] text-slate-500">T${n.tier}</span>
+    </div>
+    <h3 class="text-sm font-semibold text-slate-100 leading-snug">${n.name}</h3>
+    <div class="mt-3 space-y-1 text-[11px]">
+      <div class="flex gap-2"><span class="text-slate-500 w-8 shrink-0">top</span><span class="text-slate-300 truncate min-w-0">→ ${n.topNext.map(id => NODE_BY_ID[id].name).join(', ')}</span></div>
+      <div class="flex gap-2"><span class="text-slate-500 w-8 shrink-0">btm</span><span class="text-slate-300 truncate min-w-0">→ ${n.bottomNext.map(id => NODE_BY_ID[id].name).join(', ')}</span></div>
+    </div>`;
+  c.onclick = () => openDrawer(n.id);
+  return c;
+}
+
+// =====================================================================
+// DRAWER
+// =====================================================================
+function openDrawer(id) {
+  const n = NODE_BY_ID[id];
+  const f = FAMILIES[n.family];
+  const t = TIERS[n.tier];
+  const d = document.getElementById('drawer');
+  const c = document.getElementById('drawer-content');
+  c.className = `p-5 sm:p-6 ${f.cls}`;
+  c.innerHTML = `
+    <div class="flex items-start justify-between gap-4 mb-4">
+      <div>
+        <div class="flex items-center gap-2 mb-2">
+          <span class="text-[10px] uppercase tracking-widest accent-text border accent-border rounded px-1.5 py-0.5">${f.label}</span>
+          <span class="text-[10px] uppercase tracking-widest text-slate-400 border border-slate-700 rounded px-1.5 py-0.5">T${n.tier} · ${t.label}</span>
+        </div>
+        <h2 class="text-xl font-semibold text-slate-50 leading-tight">${n.name}</h2>
+      </div>
+      <button id="drawer-close" class="text-slate-500 hover:text-slate-100 text-lg leading-none px-2" aria-label="Close">×</button>
+    </div>
+    <p class="text-sm text-slate-300 leading-relaxed mb-6">${n.summary}</p>
+
+    ${routeBlock('If on top · advancing', n.topLabel, n.topRoute)}
+    ${routeBlock('If on bottom · escaping / recovering', n.bottomLabel, n.bottomRoute)}
+
+    <div class="space-y-4 mt-6">
+      ${SECTIONS.map(s => `
+        <div>
+          <h4 class="text-[10px] uppercase tracking-widest text-slate-500 mb-1">${s.label}${s.labelField ? ` <span class="text-slate-600">· ${n[s.labelField]}</span>` : ''}</h4>
+          <p class="text-[13px] text-slate-300 leading-relaxed">${n[s.field]}</p>
+        </div>`).join('')}
+    </div>
+
+    <div class="mt-6 grid grid-cols-2 gap-3">
+      ${nextList('Promotes to (top)', n.topNext)}
+      ${nextList('Recovers to (bottom)', n.bottomNext)}
+    </div>
+
+    <div class="mt-6 pt-4 border-t border-slate-800">
+      <h4 class="text-[10px] uppercase tracking-widest text-slate-500 mb-2">Reached from</h4>
+      <div class="flex flex-wrap gap-1.5">${
+        NODES.filter(m => m.topNext.includes(n.id) || m.bottomNext.includes(n.id))
+          .map(m => nodeChip(m.id)).join('') || '<span class="text-[11px] text-slate-600">—</span>'
+      }</div>
+    </div>
+
+    <button id="drawer-drill" class="mt-6 w-full text-xs uppercase tracking-wider px-3 py-2 rounded border border-slate-600 hover:border-slate-300 text-slate-200">drill this card →</button>
+  `;
+  c.querySelector('#drawer-close').onclick = closeDrawer;
+  c.querySelector('#drawer-drill').onclick = () => { closeDrawer(); setMode('cards'); showCard(n.id); };
+  c.querySelectorAll('[data-goto]').forEach(b => b.onclick = () => openDrawer(b.dataset.goto));
+  document.getElementById('drawer-backdrop').hidden = false;
+  d.classList.remove('translate-x-full');
+  d.setAttribute('aria-hidden', 'false');
+  d.scrollTop = 0;
+}
+function closeDrawer() {
+  const d = document.getElementById('drawer');
+  d.classList.add('translate-x-full');
+  d.setAttribute('aria-hidden', 'true');
+  document.getElementById('drawer-backdrop').hidden = true;
+}
+function routeBlock(title, role, steps) {
+  return `
+    <div class="mb-4">
+      <h4 class="text-[10px] uppercase tracking-widest text-slate-500 mb-2">${title} <span class="text-slate-600">· ${role}</span></h4>
+      <div class="flex flex-wrap items-center gap-1.5">${steps.map((s, i) =>
+        (i ? '<span class="text-slate-600 text-[11px]">→</span>' : '') +
+        (s.startsWith('@') ? nodeChip(s.slice(1)) : `<span class="text-[11px] text-slate-300 bg-slate-800/80 rounded px-2 py-0.5">${s}</span>`)
+      ).join('')}</div>
+    </div>`;
+}
+function nodeChip(id) {
+  const m = NODE_BY_ID[id];
+  const f = FAMILIES[m.family];
+  return `<button data-goto="${id}" class="${f.cls} text-[11px] accent-text border accent-border rounded px-2 py-0.5 hover:bg-slate-800">${m.name}</button>`;
+}
+function nextList(title, ids) {
+  return `<div>
+    <h4 class="text-[10px] uppercase tracking-widest text-slate-500 mb-2">${title}</h4>
+    <div class="flex flex-wrap gap-1.5">${ids.map(nodeChip).join('')}</div>
+  </div>`;
+}
+
+// =====================================================================
+// FLASHCARDS + SPACED REPETITION
+// =====================================================================
+function pickNext(excludeId) {
+  const deck = filteredNodes();
+  if (!deck.length) return null;
+  const c = state.srs.counter;
+  const scored = deck.map(n => ({ n, s: cardState(n.id) }));
+  let pool = scored.filter(x => x.s.due <= c && x.n.id !== excludeId);
+  if (!pool.length) pool = scored.filter(x => x.n.id !== excludeId);
+  if (!pool.length) pool = scored;
+  pool.sort((a, b) => (a.s.due - b.s.due) || (a.s.box - b.s.box) || (a.s.seen - b.s.seen) || (Math.random() - 0.5));
+  return pool[0].n;
+}
+
+function showCard(id) {
+  const n = id ? NODE_BY_ID[id] : pickNext(state.currentId);
+  const card = document.getElementById('flashcard');
+  const empty = document.getElementById('deck-empty');
+  if (!n) { card.hidden = true; empty.hidden = false; renderDeckStatus(); return; }
+  card.hidden = false; empty.hidden = true;
+  state.currentId = n.id;
+  state.revealed = new Set(SECTIONS.filter(s => !state.prefs.hidden[s.key]).map(s => s.key));
+  const f = FAMILIES[n.family];
+  card.className = `rounded-lg border border-slate-700 bg-slate-900/90 p-5 sm:p-7 fade-in accent-glow ${f.cls}`;
+  card.style.animation = 'none'; void card.offsetWidth; card.style.animation = '';
+  document.getElementById('fc-badges').innerHTML = `
+    <span class="text-[10px] uppercase tracking-widest accent-text border accent-border rounded px-1.5 py-0.5">${f.label}</span>
+    <span class="text-[10px] uppercase tracking-widest text-slate-400 border border-slate-700 rounded px-1.5 py-0.5">Tier ${n.tier}</span>
+    <span class="text-[10px] text-slate-600">box ${cardState(n.id).box}</span>`;
+  document.getElementById('fc-name').textContent = n.name;
+  document.getElementById('fc-summary').textContent = n.summary;
+  renderSections();
+  renderDeckStatus();
+}
+
+function renderSections() {
+  const n = NODE_BY_ID[state.currentId];
+  const root = document.getElementById('fc-sections');
+  root.innerHTML = '';
+  for (const s of SECTIONS) {
+    const open = state.revealed.has(s.key);
+    const box = el('div', `rounded border ${open ? 'border-slate-700 bg-slate-800/40' : 'border-slate-800 bg-slate-900/40'}`);
+    box.innerHTML = `
+      <button class="w-full flex items-center gap-3 px-3 py-2 text-left" data-sec="${s.key}">
+        <span class="text-[10px] uppercase tracking-widest ${open ? 'text-slate-200' : 'text-slate-400'}">${s.label}</span>
+        <span class="text-[10px] text-slate-600 hidden sm:inline">${s.hint}${s.labelField ? ' · ' + n[s.labelField] : ''}</span>
+        <span class="ml-auto text-[10px] ${open ? 'text-slate-600' : 'accent-text'}">${open ? 'hide' : 'reveal'}</span>
+      </button>
+      <div class="reveal-body px-3 pb-3 text-[13px] text-slate-300 leading-relaxed" ${open ? '' : 'hidden'}>${n[s.field]}</div>`;
+    box.querySelector('button').onclick = () => { toggle(state.revealed, s.key); renderSections(); };
+    root.appendChild(box);
+  }
+}
+
+function revealAll() {
+  if (state.revealed.size === SECTIONS.length) state.revealed.clear();
+  else SECTIONS.forEach(s => state.revealed.add(s.key));
+  renderSections();
+}
+
+function answer(gotIt) {
+  if (!state.currentId || document.getElementById('flashcard').hidden) return;
+  const s = cardState(state.currentId);
+  s.seen++;
+  state.srs.counter++;
+  if (gotIt) {
+    s.correct++;
+    s.box = Math.min(s.box + 1, INTERVALS.length - 1);
+    s.due = state.srs.counter + INTERVALS[s.box];
+    state.session.got++;
+  } else {
+    s.box = 0;
+    s.due = state.srs.counter + 2;
+    state.session.review++;
+  }
+  state.session.shown++;
+  saveJSON(SRS_KEY, state.srs);
+  showCard();
+}
+
+function renderDeckStatus() {
+  const deck = filteredNodes();
+  const due = deck.filter(n => cardState(n.id).due <= state.srs.counter).length;
+  document.getElementById('deck-status').innerHTML = `
+    <span><span class="text-slate-200">${deck.length}</span> cards in deck</span>
+    <span><span class="text-slate-200">${due}</span> due now</span>
+    <span>queue position <span class="text-slate-200">#${state.srs.counter}</span></span>`;
+  const st = state.session;
+  const acc = st.shown ? Math.round(100 * st.got / st.shown) : null;
+  document.getElementById('session-stats').innerHTML = [
+    ['answered', st.shown], ['got it', st.got], ['accuracy', acc === null ? '—' : acc + '%'],
+  ].map(([k, v]) => `<div><dt class="text-[10px] uppercase tracking-widest text-slate-500">${k}</dt><dd class="text-lg text-slate-100">${v}</dd></div>`).join('');
+  const bars = document.getElementById('box-bars');
+  const counts = INTERVALS.map((_, i) => deck.filter(n => cardState(n.id).box === i).length);
+  const max = Math.max(1, ...counts);
+  bars.innerHTML = counts.map((c, i) => `
+    <div class="flex items-center gap-2 text-[10px]">
+      <span class="w-10 text-slate-500">box ${i}</span>
+      <div class="flex-1 h-1.5 bg-slate-800 rounded overflow-hidden"><div class="h-full ${i === 0 ? 'bg-rose-400/70' : i === INTERVALS.length - 1 ? 'bg-emerald-400/80' : 'bg-slate-400/70'}" style="width:${(c / max) * 100}%"></div></div>
+      <span class="w-4 text-right text-slate-400">${c}</span>
+    </div>`).join('');
+}
+
+function renderHideToggles() {
+  const root = document.getElementById('hide-toggles');
+  root.innerHTML = '';
+  for (const s of SECTIONS) {
+    const label = el('label', 'flex items-center gap-2 text-[11px] text-slate-300 cursor-pointer');
+    const cb = document.createElement('input');
+    cb.type = 'checkbox'; cb.checked = !!state.prefs.hidden[s.key];
+    cb.className = 'accent-slate-300';
+    cb.onchange = () => { state.prefs.hidden[s.key] = cb.checked; saveJSON(PREF_KEY, state.prefs); };
+    label.append(cb, document.createTextNode(s.label));
+    root.appendChild(label);
+  }
+}
+
+// =====================================================================
+// MODE + WIRING
+// =====================================================================
+function setMode(mode) {
+  state.mode = mode;
+  state.prefs.mode = mode; saveJSON(PREF_KEY, state.prefs);
+  document.getElementById('view-roadmap').hidden = mode !== 'roadmap';
+  document.getElementById('view-cards').hidden = mode !== 'cards';
+  document.querySelectorAll('.mode-tab').forEach(b => {
+    const on = b.dataset.mode === mode;
+    b.className = `mode-tab px-3 py-1 text-xs uppercase tracking-wider rounded ${on ? 'bg-slate-100 text-slate-900' : 'text-slate-400 hover:text-slate-100'}`;
+    b.setAttribute('aria-selected', on);
+  });
+  if (mode === 'cards' && (!state.currentId || !filteredNodes().some(n => n.id === state.currentId))) showCard();
+  else if (mode === 'cards') renderDeckStatus();
+}
+
+function rerender() {
+  renderChips();
+  renderRoadmap();
+  if (state.mode === 'cards') {
+    if (!filteredNodes().some(n => n.id === state.currentId)) showCard();
+    else renderDeckStatus();
+  }
+}
+
+function el(tag, cls, text) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text != null) e.textContent = text;
+  return e;
+}
+
+document.querySelectorAll('.mode-tab').forEach(b => b.onclick = () => setMode(b.dataset.mode));
+document.getElementById('clear-filters').onclick = () => { state.families.clear(); state.tiers.clear(); rerender(); };
+document.getElementById('drawer-backdrop').onclick = closeDrawer;
+document.getElementById('fc-reveal-all').onclick = revealAll;
+document.getElementById('fc-got').onclick = () => answer(true);
+document.getElementById('fc-review').onclick = () => answer(false);
+document.getElementById('fc-open-node').onclick = () => state.currentId && openDrawer(state.currentId);
+document.getElementById('reset-progress').onclick = () => {
+  if (!confirm('Reset all retention progress?')) return;
+  state.srs = { counter: 0, cards: {} };
+  state.session = { shown: 0, got: 0, review: 0 };
+  saveJSON(SRS_KEY, state.srs);
+  showCard();
+};
+
+document.addEventListener('keydown', e => {
+  if (e.target.matches('input, textarea')) return;
+  if (e.key === 'Escape') return closeDrawer();
+  if (state.mode !== 'cards' || !document.getElementById('drawer-backdrop').hidden) return;
+  if (e.key === ' ') { e.preventDefault(); revealAll(); }
+  else if (e.key === '1') answer(true);
+  else if (e.key === '2') answer(false);
+});
+
+renderChips();
+renderRoadmap();
+renderHideToggles();
+setMode(state.mode);
+</script>
+</body>
+</html>
