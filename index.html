@@ -844,6 +844,76 @@ const KINDS = {
 };
 const kindOf = id => GRIP_BY_ID[id] ? 'grip' : 'position';
 
+
+// =====================================================================
+// INLINE LINKS · Wikipedia-style cross references inside card prose
+// =====================================================================
+// Positions are matched case-sensitively (the prose capitalises them: "Side Control", "the Back").
+// Grips are matched case-insensitively (the prose writes them lowercase: "underhook").
+const LINK_ALIASES = [
+  ['standing', ['Standing'], true],
+  ['closed-guard', ['Closed Guard'], true],
+  ['half-guard', ['Half Guard'], true],
+  ['butterfly', ['Butterfly Guard', 'Butterfly'], true],
+  ['slx', ['Single Leg X', 'SLX', 'Seated Guard'], true],
+  ['ashi', ['Straight Ashi Garami', 'Straight Ashi', 'Ashi Garami', 'Ashi'], true],
+  ['inside-sankaku', ['Inside Sankaku', 'Sankaku', 'Honey Hole', '411'], true],
+  ['fifty-fifty', ['50/50'], true],
+  ['side-control', ['Side Control'], true],
+  ['north-south', ['North-South', 'North South'], true],
+  ['knee-on-belly', ['Knee on Belly'], true],
+  ['mount', ['Full Mount', 'Mount'], true],
+  ['s-mount', ['S-Mount'], true],
+  ['back-control', ['Back Control', 'Back'], true],
+  ['body-triangle', ['Body Triangle', 'body triangle'], true],
+  ['back-mount-belly', ['Back Mount'], true],
+  ['turtle', ['Turtle'], true],
+  ['g-collar', ['collar grip'], false],
+  ['g-cross-collar', ['cross collar'], false],
+  ['g-cross-grip', ['cross grip', 'cross sleeve'], false],
+  ['g-sleeve', ['sleeve grip', 'pistol grip', 'pocket grip'], false],
+  ['g-collar-sleeve', ['collar-and-sleeve', 'collar and sleeve'], false],
+  ['g-lapel', ['lapel grip'], false],
+  ['g-pants', ['pants grip', 'knee grip', 'ankle grip'], false],
+  ['g-belt', ['belt grip'], false],
+  ['g-underhook', ['underhook'], false],
+  ['g-overhook', ['overhook', 'whizzer'], false],
+  ['g-collar-tie', ['collar tie'], false],
+  ['g-wrist', ['wrist control', 'two-on-one', '2-on-1', 'hand fight'], false],
+  ['g-crossface', ['crossface'], false],
+  ['g-seatbelt', ['seatbelt', 'harness'], false],
+  ['g-gable', ['gable grip', 'gable'], false],
+  ['g-s-grip', ['S-grip'], false],
+  ['g-kimura', ['kimura grip', 'figure-four', 'kimura'], false],
+  ['g-front-headlock', ['front headlock'], false],
+  ['g-bodylock', ['bodylock', 'body lock'], false],
+  ['g-heel', ['heel hook', 'ankle lock', 'heel grip'], false],
+  ['g-monkey', ['monkey grip', 'C-grip'], false],
+];
+const escRe = t => t.replace(/[.*+?^${}()|[\]\\\/]/g, '\\$&');
+const LINK_RULES = LINK_ALIASES.flatMap(([id, aliases, cs]) => aliases.map(a => ({ id, alias: a, re: new RegExp(`(^|[^\\w-])(${escRe(a)})(?![\\w-])`, cs ? '' : 'i') })))
+  .sort((a, b) => b.alias.length - a.alias.length);
+
+// First mention of each other card becomes a link. selfId is never linked.
+// Matched spans are swapped for @@N@@ tokens so later rules cannot match inside a link.
+function linkify(text, selfId) {
+  if (!text) return '';
+  const slots = [];
+  const done = new Set([selfId]);
+  let out = text;
+  for (const r of LINK_RULES) {
+    if (done.has(r.id)) continue;
+    const m = r.re.exec(out);
+    if (!m) continue;
+    done.add(r.id);
+    const k = KINDS[kindOf(r.id)];
+    const o = k.byId[r.id];
+    slots.push(`<button data-goto="${r.id}" title="${o.name}" class="${k.cls(o)} accent-text underline decoration-dotted underline-offset-2 hover:decoration-solid">${m[2]}</button>`);
+    out = out.slice(0, m.index) + m[1] + `@@${slots.length - 1}@@` + out.slice(m.index + m[0].length);
+  }
+  return out.replace(/@@(\d+)@@/g, (_, i) => slots[Number(i)]);
+}
+
 // =====================================================================
 // STATE
 // =====================================================================
@@ -1064,14 +1134,14 @@ function nodeDrawer(n) {
   return `
     ${drawerHeader(badge(f.label, true) + badge(`T${n.tier} · ${t.label}`), n.name)}
     <div class="mb-4">${mediaPanel(n.id)}</div>
-    <p class="text-sm text-slate-300 leading-relaxed mb-6">${n.summary}</p>
+    <p class="text-sm text-slate-300 leading-relaxed mb-6">${linkify(n.summary, n.id)}</p>
     ${routeBlock('If on top · advancing', n.topLabel, n.topRoute)}
     ${routeBlock('If on bottom · escaping / recovering', n.bottomLabel, n.bottomRoute)}
     <div class="space-y-4 mt-6">
       ${POSITION_SECTIONS.map(s => `
         <div>
           <h4 class="text-[10px] uppercase tracking-widest text-slate-500 mb-1">${s.label}${s.labelField ? ` <span class="text-slate-600">· ${n[s.labelField]}</span>` : ''}</h4>
-          <p class="text-[13px] text-slate-300 leading-relaxed">${n[s.field]}</p>
+          <p class="text-[13px] text-slate-300 leading-relaxed">${linkify(n[s.field], n.id)}</p>
         </div>`).join('')}
     </div>
     <div class="mt-6 grid grid-cols-2 gap-3">
@@ -1098,11 +1168,11 @@ function gripDrawer(g) {
       ${GRIP_SECTIONS.filter(s => !s.chips).map(s => `
         <div>
           <h4 class="text-[10px] uppercase tracking-widest text-slate-500 mb-1">${s.label}</h4>
-          <p class="text-[13px] text-slate-300 leading-relaxed">${g[s.field]}</p>
+          <p class="text-[13px] text-slate-300 leading-relaxed">${linkify(g[s.field], g.id)}</p>
         </div>`).join('')}
       <div>
         <h4 class="text-[10px] uppercase tracking-widest text-slate-500 mb-1">Do not confuse with</h4>
-        <p class="text-[13px] text-slate-300 leading-relaxed">${g.confuse}</p>
+        <p class="text-[13px] text-slate-300 leading-relaxed">${linkify(g.confuse, g.id)}</p>
       </div>
     </div>
     <div class="mt-6 pt-4 border-t border-slate-800">
@@ -1163,7 +1233,9 @@ function showCard(id) {
   document.getElementById('fc-badges').innerHTML = badge(k.badge(n), true) + badge(k.sub(n)) + `<span class="text-[10px] text-slate-600">${k.label} · box ${cardState(n.id).box}</span>`;
   document.getElementById('fc-name').textContent = n.name;
   const ph = document.getElementById('fc-photo'); ph.innerHTML = mediaPanel(n.id, { compact: true }); wireMedia(ph);
-  document.getElementById('fc-summary').textContent = n.summary || (n.aliases && n.aliases.length ? 'also called: ' + n.aliases.join(', ') : '');
+  const sum = document.getElementById('fc-summary');
+  sum.innerHTML = n.summary ? linkify(n.summary, n.id) : (n.aliases && n.aliases.length ? 'also called: ' + n.aliases.join(', ') : '');
+  sum.querySelectorAll('[data-goto]').forEach(b => b.onclick = () => openDrawer(b.dataset.goto));
   renderSections();
   renderDeckStatus();
 }
@@ -1176,7 +1248,7 @@ function renderSections() {
   for (const s of k.sections) {
     const open = state.revealed.has(s.key);
     const box = el('div', `rounded border ${open ? 'border-slate-700 bg-slate-800/40' : 'border-slate-800 bg-slate-900/40'}`);
-    const body = s.chips ? `<div class="flex flex-wrap gap-1.5">${n[s.field].map(idChip).join('')}</div>` : n[s.field];
+    const body = s.chips ? `<div class="flex flex-wrap gap-1.5">${n[s.field].map(idChip).join('')}</div>` : linkify(n[s.field], n.id);
     box.innerHTML = `
       <button class="w-full flex items-center gap-3 px-3 py-2 text-left" data-sec="${s.key}">
         <span class="text-[10px] uppercase tracking-widest ${open ? 'text-slate-200' : 'text-slate-400'}">${s.label}</span>
@@ -1330,11 +1402,11 @@ function renderCall() {
     <div class="rounded border border-slate-800 bg-slate-800/30 p-3 space-y-3">
       <div>
         <h4 class="text-[10px] uppercase tracking-widest text-slate-500 mb-1">${holder} has the ${g.name} · what it sets up</h4>
-        <p class="text-[13px] text-slate-300 leading-relaxed">${g.setsUp}</p>
+        <p class="text-[13px] text-slate-300 leading-relaxed">${linkify(g.setsUp, g.id)}</p>
       </div>
       <div>
         <h4 class="text-[10px] uppercase tracking-widest text-slate-500 mb-1">${other} · break it first</h4>
-        <p class="text-[13px] text-slate-300 leading-relaxed">${g.breaking}</p>
+        <p class="text-[13px] text-slate-300 leading-relaxed">${linkify(g.breaking, g.id)}</p>
       </div>
     </div>` : ''}
     <div class="flex flex-wrap gap-2 pt-1">
@@ -1419,7 +1491,8 @@ function renderQuiz() {
   fb.hidden = !quiz.answered;
   if (quiz.answered) {
     const ok = st.options.find(o => o.id === quiz.picked)?.ok;
-    fb.innerHTML = `<span class="${ok ? 'text-emerald-400' : 'text-rose-400'}">${ok ? 'correct.' : 'no.'}</span> ${st.explain ? st.explain : (kindOf(c.id) === 'position' ? c.summary : c.controls)}`;
+    fb.innerHTML = `<span class="${ok ? 'text-emerald-400' : 'text-rose-400'}">${ok ? 'correct.' : 'no.'}</span> ${linkify(st.explain ? st.explain : (kindOf(c.id) === 'position' ? c.summary : c.controls), c.id)}`;
+    fb.querySelectorAll('[data-goto]').forEach(b => b.onclick = () => openDrawer(b.dataset.goto));
   }
   document.getElementById('quiz-next').hidden = !quiz.answered;
   document.getElementById('quiz-next').innerHTML = (quiz.step < quiz.steps.length - 1 ? 'next step' : 'next photo') + ' <kbd class="border-slate-400 text-slate-700">space</kbd>';
