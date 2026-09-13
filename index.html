@@ -32,19 +32,24 @@
   .fade-in { animation: fadeIn .18s ease-out; }
   @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
   .drawer { transition: transform .22s ease-out; }
-  .reveal-body { transition: opacity .15s ease-out; }
   [hidden] { display: none !important; }
   .fam-guards { --accent: #34d399; }
   .fam-pins   { --accent: #fbbf24; }
   .fam-back   { --accent: #fb7185; }
   .fam-legs   { --accent: #38bdf8; }
   .fam-hub    { --accent: #a78bfa; }
+  .grip-collar { --accent: #f472b6; }
+  .grip-sleeve { --accent: #fb923c; }
+  .grip-clinch { --accent: #2dd4bf; }
+  .grip-clasp  { --accent: #a3e635; }
+  .grip-legs   { --accent: #38bdf8; }
   .accent-border { border-color: var(--accent); }
   .accent-text { color: var(--accent); }
   .accent-bg { background: var(--accent); }
   .accent-ring:hover, .accent-ring:focus-visible { box-shadow: 0 0 0 1px var(--accent), 0 0 24px -8px var(--accent); outline: none; }
   .accent-glow { box-shadow: 0 0 0 1px var(--accent), 0 0 40px -12px var(--accent); }
   kbd { font-family: inherit; border: 1px solid #475569; border-bottom-width: 2px; border-radius: 3px; padding: 0 5px; font-size: 10px; color: #cbd5e1; }
+  select { background: #1e293b; color: #e2e8f0; border: 1px solid #334155; border-radius: 4px; padding: 4px 8px; font-size: 11px; font-family: inherit; max-width: 100%; }
 </style>
 </head>
 <body class="font-mono text-slate-200 antialiased min-h-screen grid-bg">
@@ -57,9 +62,11 @@
       <h1 class="text-sm sm:text-base font-semibold tracking-widest uppercase text-slate-100">bjj.state_machine</h1>
       <span class="text-[10px] text-slate-500 hidden sm:inline">// positional hierarchy · submeta model</span>
     </div>
-    <nav class="flex gap-1 bg-slate-800/70 p-1 rounded border border-slate-700" role="tablist" aria-label="Mode">
-      <button id="tab-roadmap" data-mode="roadmap" role="tab" class="mode-tab px-3 py-1 text-xs uppercase tracking-wider rounded">Roadmap</button>
-      <button id="tab-cards" data-mode="cards" role="tab" class="mode-tab px-3 py-1 text-xs uppercase tracking-wider rounded">Flashcards</button>
+    <nav class="flex flex-wrap gap-1 bg-slate-800/70 p-1 rounded border border-slate-700" role="tablist" aria-label="Mode">
+      <button data-mode="roadmap" role="tab" class="mode-tab px-3 py-1 text-xs uppercase tracking-wider rounded">Roadmap</button>
+      <button data-mode="grips" role="tab" class="mode-tab px-3 py-1 text-xs uppercase tracking-wider rounded">Grips</button>
+      <button data-mode="cards" role="tab" class="mode-tab px-3 py-1 text-xs uppercase tracking-wider rounded">Flashcards</button>
+      <button data-mode="call" role="tab" class="mode-tab px-3 py-1 text-xs uppercase tracking-wider rounded">Call</button>
     </nav>
   </div>
 </header>
@@ -67,13 +74,25 @@
 <!-- ============ FILTERS ============ -->
 <section class="max-w-7xl mx-auto px-4 pt-4">
   <div class="flex flex-wrap items-center gap-x-6 gap-y-3">
-    <div class="flex flex-wrap items-center gap-1.5">
-      <span class="text-[10px] uppercase tracking-widest text-slate-500 mr-1">family</span>
-      <div id="family-chips" class="flex flex-wrap gap-1.5"></div>
+    <div id="filter-positions" class="contents">
+      <div class="flex flex-wrap items-center gap-1.5">
+        <span class="text-[10px] uppercase tracking-widest text-slate-500 mr-1">family</span>
+        <div id="family-chips" class="flex flex-wrap gap-1.5"></div>
+      </div>
+      <div class="flex flex-wrap items-center gap-1.5">
+        <span class="text-[10px] uppercase tracking-widest text-slate-500 mr-1">tier</span>
+        <div id="tier-chips" class="flex flex-wrap gap-1.5"></div>
+      </div>
     </div>
-    <div class="flex flex-wrap items-center gap-1.5">
-      <span class="text-[10px] uppercase tracking-widest text-slate-500 mr-1">tier</span>
-      <div id="tier-chips" class="flex flex-wrap gap-1.5"></div>
+    <div id="filter-grips" class="contents">
+      <div class="flex flex-wrap items-center gap-1.5">
+        <span class="text-[10px] uppercase tracking-widest text-slate-500 mr-1">grip</span>
+        <div id="grip-chips" class="flex flex-wrap gap-1.5"></div>
+      </div>
+      <div class="flex flex-wrap items-center gap-1.5">
+        <span class="text-[10px] uppercase tracking-widest text-slate-500 mr-1">ruleset</span>
+        <div id="gi-chips" class="flex flex-wrap gap-1.5"></div>
+      </div>
     </div>
     <button id="clear-filters" class="text-[10px] uppercase tracking-widest text-slate-500 hover:text-slate-200 underline underline-offset-4 decoration-slate-700" hidden>clear</button>
     <span id="filter-count" class="text-[10px] text-slate-500 ml-auto"></span>
@@ -85,21 +104,27 @@
   <!-- ============ ROADMAP VIEW ============ -->
   <section id="view-roadmap" class="space-y-8"></section>
 
+  <!-- ============ GRIPS VIEW ============ -->
+  <section id="view-grips" class="space-y-8" hidden></section>
+
   <!-- ============ FLASHCARD VIEW ============ -->
   <section id="view-cards" hidden>
     <div class="grid lg:grid-cols-[1fr_280px] gap-6 items-start">
 
       <div class="space-y-4">
-        <div id="deck-status" class="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-slate-400"></div>
+        <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
+          <div id="deck-chips" class="flex gap-1.5"></div>
+          <div id="deck-status" class="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-slate-400"></div>
+        </div>
 
         <article id="flashcard" class="rounded-lg border border-slate-700 bg-slate-900/90 p-5 sm:p-7 fade-in accent-glow">
           <div class="flex items-start justify-between gap-3">
-            <div>
+            <div class="min-w-0">
               <div id="fc-badges" class="flex flex-wrap items-center gap-2 mb-2"></div>
               <h2 id="fc-name" class="text-xl sm:text-2xl font-semibold tracking-tight text-slate-50"></h2>
               <p id="fc-summary" class="text-xs sm:text-sm text-slate-400 mt-2 leading-relaxed"></p>
             </div>
-            <button id="fc-open-node" class="shrink-0 text-[10px] uppercase tracking-widest text-slate-500 hover:text-slate-200 border border-slate-700 rounded px-2 py-1">map ↗</button>
+            <button id="fc-open-node" class="shrink-0 text-[10px] uppercase tracking-widest text-slate-500 hover:text-slate-200 border border-slate-700 rounded px-2 py-1">detail ↗</button>
           </div>
 
           <div id="fc-sections" class="mt-6 space-y-3"></div>
@@ -132,30 +157,60 @@
 
         <div class="rounded-lg border border-slate-800 bg-slate-900/70 p-4">
           <h3 class="text-[10px] uppercase tracking-widest text-slate-500 mb-3">hide by default</h3>
-          <div id="hide-toggles" class="space-y-2"></div>
+          <div id="hide-toggles" class="space-y-3"></div>
         </div>
 
         <button id="reset-progress" class="w-full text-[10px] uppercase tracking-widest text-slate-500 hover:text-rose-300 border border-slate-800 hover:border-rose-500/50 rounded px-3 py-2">reset progress</button>
       </aside>
     </div>
   </section>
+
+  <!-- ============ SPARRING CALL VIEW ============ -->
+  <section id="view-call" hidden>
+    <div class="max-w-3xl mx-auto space-y-4">
+      <p class="text-[11px] text-slate-500 leading-relaxed">the coach calls a position and a starting grip. say out loud, before revealing: what bottom is going for, what top is going for, and what the grip changes. then check.</p>
+
+      <div class="flex flex-wrap items-center gap-2">
+        <select id="call-pos"></select>
+        <select id="call-role">
+          <option value="random">random holder</option>
+          <option value="bottom">bottom holds grip</option>
+          <option value="top">top holds grip</option>
+        </select>
+        <select id="call-grip"><option value="random">random grip</option></select>
+        <button id="call-new" class="ml-auto text-xs uppercase tracking-wider px-4 py-2 rounded bg-slate-100 text-slate-900 hover:bg-white">new call <kbd class="border-slate-400 text-slate-700">n</kbd></button>
+      </div>
+
+      <article id="call-card" class="rounded-lg border border-slate-700 bg-slate-900/90 p-5 sm:p-7 accent-glow">
+        <div class="text-[10px] uppercase tracking-widest text-slate-500 mb-3">coach says</div>
+        <div id="call-text" class="text-lg sm:text-2xl text-slate-50 leading-snug"></div>
+        <div id="call-sub" class="mt-2 text-xs text-slate-500"></div>
+
+        <div id="call-reveal" class="mt-6 space-y-4" hidden></div>
+
+        <div class="mt-6 flex flex-wrap gap-2">
+          <button id="call-show" class="text-xs uppercase tracking-wider px-3 py-2 rounded border border-slate-600 hover:border-slate-400 text-slate-300">reveal destinations <kbd>space</kbd></button>
+        </div>
+      </article>
+    </div>
+  </section>
 </main>
 
 <!-- ============ DRAWER ============ -->
 <div id="drawer-backdrop" class="fixed inset-0 bg-slate-950/70 z-40" hidden></div>
-<aside id="drawer" class="drawer fixed z-50 inset-y-0 right-0 w-full sm:max-w-lg bg-slate-900 border-l border-slate-700 overflow-y-auto translate-x-full" aria-label="Position detail" aria-hidden="true">
+<aside id="drawer" class="drawer fixed z-50 inset-y-0 right-0 w-full sm:max-w-lg bg-slate-900 border-l border-slate-700 overflow-y-auto translate-x-full" aria-label="Detail" aria-hidden="true">
   <div id="drawer-content" class="p-5 sm:p-6"></div>
 </aside>
 
 <footer class="max-w-7xl mx-auto px-4 pb-8 text-[10px] text-slate-600 flex flex-wrap gap-x-4 gap-y-1">
   <span>tier = control vector (0 neutral → 5 ultimate).</span>
   <span>family = the four submeta position families + the turtle/standing hub.</span>
-  <span>keys: <kbd>space</kbd> reveal · <kbd>1</kbd> got it · <kbd>2</kbd> review · <kbd>esc</kbd> close</span>
+  <span>keys: <kbd>space</kbd> reveal · <kbd>1</kbd> got it · <kbd>2</kbd> review · <kbd>n</kbd> new call · <kbd>esc</kbd> close</span>
 </footer>
 
 <script>
 // =====================================================================
-// DATA
+// DATA · POSITIONS
 // =====================================================================
 const FAMILIES = {
   guards: { label: 'Guards', cls: 'fam-guards', desc: 'Bottom player has legs between self and opponent. Retain, off-balance, sweep, submit, or enter legs.' },
@@ -384,30 +439,253 @@ const NODES = [
 
 const NODE_BY_ID = Object.fromEntries(NODES.map(n => [n.id, n]));
 
-const SECTIONS = [
+// =====================================================================
+// DATA · GRIPS
+// =====================================================================
+const GRIP_TYPES = {
+  collar: { label: 'Collar & lapel', cls: 'grip-collar', desc: 'Gi jacket grips. They control posture and the spine, and they are the first hand of most chokes.' },
+  sleeve: { label: 'Sleeve & pants', cls: 'grip-sleeve', desc: 'Gi limb grips. Kill posts, steer elbows and knees, build spider, lasso, and De La Riva.' },
+  clinch: { label: 'Clinch & ties', cls: 'grip-clinch', desc: 'Upper-body controls that work with or without the gi: head, shoulder line, wrists.' },
+  clasp:  { label: 'Hand clasps', cls: 'grip-clasp', desc: 'How your two hands lock together. The clasp decides whether a hold survives pressure.' },
+  legs:   { label: 'Leg & foot', cls: 'grip-legs', desc: 'Lower-body grips: passing, killing hooks, and the leg entanglement finish.' },
+};
+
+const GI_LABEL = { gi: 'gi', nogi: 'no-gi', both: 'gi + no-gi' };
+
+// usedBy: who typically holds it. positions: node ids where it shows up.
+const GRIPS = [
+  {
+    id: 'g-collar', name: 'Collar Grip (same-side)', aliases: ['Upper lapel grip', 'Same-side collar'], type: 'collar', gi: 'gi', usedBy: 'both',
+    positions: ['closed-guard', 'half-guard', 'standing', 'mount', 'knee-on-belly'],
+    held: 'Your right hand grabs the collar nearest to it, which is their left lapel, about collarbone height. Four fingers inside, thumb out, knuckles turned in toward the neck to take out the slack.',
+    controls: 'Posture and the head. Pull and the spine bends toward you; push and you hold them at range. Bottom players use it to break posture. Top players use it from Mount and Knee on Belly to pin the head and start the collar choke.',
+    setsUp: 'Bottom: posture break into hip bump, scissor sweep, and the second hand of a collar choke. Top from Mount: cross collar choke, ezekiel. Standing: snap-downs and foot sweeps.',
+    breaking: 'Posture first, then strip it: two hands on their wrist, pull down and away along the line of their fingers, and pin the hand to their own chest or the mat. A deep collar grip left alone becomes a choke.',
+    confuse: 'The cross collar grip is the same lapel with the opposite hand. The collar tie is the no-gi cousin: hand behind the neck, no cloth.',
+  },
+  {
+    id: 'g-cross-collar', name: 'Cross Collar Grip', aliases: ['Cross lapel grip'], type: 'collar', gi: 'gi', usedBy: 'both',
+    positions: ['closed-guard', 'mount', 'half-guard', 'knee-on-belly', 'back-control'],
+    held: 'Your right hand reaches across to their right collar, deep, palm up or four fingers in, knuckles resting against the carotid.',
+    controls: 'Posture and the neck at once. One deep cross collar grip is already half a choke, so it forces the other person to defend the neck before they do anything else.',
+    setsUp: 'Cross collar choke (second hand goes over or under), loop choke from a shallow grip, sweeps while they defend. From Mount it is the primary attack; from Closed Guard it pulls them into the triangle and armbar.',
+    breaking: 'Strip it before it gets deep: two hands on the wrist, drive it across their body and pin it. Chin down, posture up. If it is already deep, fight the second hand and posture out along the line of the choking arm.',
+    confuse: 'Cross collar is on the lapel. Cross grip is on the sleeve. Same reach across the body, different target.',
+  },
+  {
+    id: 'g-cross-grip', name: 'Cross Grip (cross sleeve / cross wrist)', aliases: ['Cross sleeve grip', 'Cross wrist control'], type: 'sleeve', gi: 'both', usedBy: 'both',
+    positions: ['closed-guard', 'butterfly', 'half-guard', 'standing', 'slx'],
+    held: 'Your right hand grabs their right sleeve at the cuff (or their right wrist in no-gi), across your body, and pulls it past your centre line.',
+    controls: 'One entire arm. They cannot post, frame, or grab with it, so the side you pull it toward opens for the arm drag and the other side opens for sweeps.',
+    setsUp: 'Arm drag to the Back, omoplata, kimura, pendulum and scissor sweeps, tripod sweep. From Half Guard bottom it stops the crossface arm before it lands.',
+    breaking: 'Circle your hand toward their thumb and pull sharply back to your own hip. Against a pistol grip, rotate the wrist out. Re-post the hand immediately.',
+    confuse: 'When the coach says "collar grip" they want a hand on the lapel. "Cross grip" means the far sleeve or wrist. Both reach across, but a collar grip controls the head and a cross grip controls an arm.',
+  },
+  {
+    id: 'g-sleeve', name: 'Sleeve Grip (pistol / pocket)', aliases: ['Cuff grip', 'Pistol grip', 'Pocket grip'], type: 'sleeve', gi: 'gi', usedBy: 'both',
+    positions: ['closed-guard', 'butterfly', 'standing', 'half-guard', 'side-control'],
+    held: 'Pistol grip: fist closed around the cuff like holding a pistol, thumb on top. Pocket grip: four fingers stuffed inside the cuff, no thumb. Same-side (your right on their left sleeve) is the default.',
+    controls: 'The elbow and the hand. A sleeve grip stops the arm from posting, pushing, or grabbing, and steers the elbow up (spider) or down (lasso).',
+    setsUp: 'Spider guard, lasso, collar-and-sleeve guard, sit-up sweeps, and taking the post away before every sweep. On top, sleeve grips kill the bottom player\'s frames.',
+    breaking: 'Yank against the thumb side, circle the wrist, or drive your elbow in and rip the cuff free with a hip movement, not the arm alone.',
+    confuse: 'Pistol versus pocket is a hand shape, not a different grip. A cross grip is the same grip on the far sleeve.',
+  },
+  {
+    id: 'g-collar-sleeve', name: 'Collar-and-Sleeve', aliases: ['Collar sleeve guard grips'], type: 'collar', gi: 'gi', usedBy: 'bottom',
+    positions: ['closed-guard', 'butterfly', 'standing'],
+    held: 'One hand in the collar (cross or same-side), the other on the sleeve of the opposite arm. Feet on the hip or bicep.',
+    controls: 'Both ends of their frame: the head through the collar and the post through the sleeve. They cannot posture out or pull the arm free without giving something up.',
+    setsUp: 'Triangle, omoplata, scissor and tripod sweeps, and transitions to spider and lasso guards.',
+    breaking: 'Break the sleeve first, then posture. A collar grip with no sleeve grip is much weaker. Stack and drive forward if they extend.',
+    confuse: 'This is the pairing a coach means when they just say "get your grips" in open guard.',
+  },
+  {
+    id: 'g-lapel', name: 'Lapel Grip (skirt / bottom lapel)', aliases: ['Skirt grip', 'Lapel feed'], type: 'collar', gi: 'gi', usedBy: 'both',
+    positions: ['half-guard', 'closed-guard', 'side-control', 'mount', 'back-control'],
+    held: 'Pull the loose tail of the jacket out from under the belt and grab it, or feed it to your other hand around a limb: their arm, your leg, their leg.',
+    controls: 'The torso and its rotation. A fed lapel turns the jacket into a rope: it traps an arm, ties a leg, or becomes a choke.',
+    setsUp: 'Lapel guards (worm guard), lapel chokes, trapping an arm from Side Control, tying the leg in Half Guard for sweeps.',
+    breaking: 'Tuck the lapel back in before it is fed. Once it is fed, control the hand doing the feeding and attack their grip rather than the cloth.',
+    confuse: 'Collar grip is above the belt on the neckline. Lapel grip is the loose tail below it.',
+  },
+  {
+    id: 'g-pants', name: 'Pants Grip (knee / ankle)', aliases: ['Knee grip', 'Pant leg grip', 'Ankle grip'], type: 'sleeve', gi: 'gi', usedBy: 'both',
+    positions: ['standing', 'butterfly', 'closed-guard', 'half-guard', 'side-control', 'knee-on-belly'],
+    held: 'Grab the fabric at the knee or at the trouser cuff. Top players pin the knees; bottom players grab ankles for tripod and sickle sweeps and De La Riva.',
+    controls: 'Hips and leg mobility. Pin the knee and the guard cannot retract. Grab the ankle and the base cannot step.',
+    setsUp: 'Top: toreando, leg drag, knee cut (pin the bottom knee). Bottom: tripod sweep, sickle sweep, De La Riva hook entries, single-leg from Butterfly.',
+    breaking: 'Kick the leg through the thumb side. Step the foot behind you against an ankle grip. Frame on their elbow and circle the knee out.',
+    confuse: 'In no-gi the same job is done by cupping the knee, ankle, or heel with a monkey grip.',
+  },
+  {
+    id: 'g-belt', name: 'Belt Grip', aliases: ['Belt control'], type: 'collar', gi: 'gi', usedBy: 'both',
+    positions: ['butterfly', 'half-guard', 'standing', 'back-control', 'turtle'],
+    held: 'Grab the belt at the back over the hips, or at the side. From Half Guard bottom it pairs with the underhook.',
+    controls: 'The hips. The bottom player pulls the hips onto them for the wrestle-up; the top player lifts and passes Butterfly with it.',
+    setsUp: 'Bottom: underhook plus belt for the dogfight and back take. Top: lift and toreando, back take from Turtle by dragging the belt.',
+    breaking: 'Posture and hip back, then peel the hand off with two hands. Never leave a belt grip on your back while turtled.',
+    confuse: 'Not the seatbelt, which is a no-gi arm-over, arm-under clasp around the chest.',
+  },
+  {
+    id: 'g-underhook', name: 'Underhook', aliases: [], type: 'clinch', gi: 'both', usedBy: 'both',
+    positions: ['half-guard', 'standing', 'side-control', 'turtle', 'butterfly'],
+    held: 'Your arm goes under their arm and your hand lands on the shoulder blade or the back of the shoulder, elbow tight to their ribs.',
+    controls: 'The shoulder line. Whoever wins the underhook chooses the direction of the fight: the bottom player wrestles up behind it, the top player pins behind it.',
+    setsUp: 'Half Guard bottom: dogfight wrestle-up, back take, sweeps. Standing: takedowns and back takes. Side Control top: pins the far arm and feeds the arm triangle.',
+    breaking: 'Whizzer (overhook) plus hip pressure, or crossface and retreat the hip. Never let the underhook and their head land on the same side.',
+    confuse: 'The overhook is the mirror image: arm over. Underhook goes under.',
+  },
+  {
+    id: 'g-overhook', name: 'Overhook / Whizzer', aliases: ['Whizzer'], type: 'clinch', gi: 'both', usedBy: 'both',
+    positions: ['half-guard', 'closed-guard', 'standing', 'side-control'],
+    held: 'Your arm goes over their arm and clamps their upper arm against your ribs, hand on your own hip, their lapel, or their far shoulder.',
+    controls: 'Their underhook and their posting arm. From bottom it locks the elbow for triangles; from top or standing it stops them from lifting or turning the corner.',
+    setsUp: 'Closed Guard bottom: overhook triangle, omoplata, pendulum sweep. Standing and Half Guard top: whizzer to stop the underhook, then reverse direction or throw.',
+    breaking: 'Limp arm: drop the elbow and pull the arm straight down and out. Or leave it and hit an arm drag on the free arm.',
+    confuse: 'A whizzer is an overhook used as a counter to an underhook, usually standing or from a sprawl.',
+  },
+  {
+    id: 'g-collar-tie', name: 'Collar Tie', aliases: ['Neck tie', 'Inside tie'], type: 'clinch', gi: 'both', usedBy: 'both',
+    positions: ['standing', 'turtle', 'butterfly', 'slx'],
+    held: 'Hand cupped behind the neck, forearm and elbow heavy on the collarbone, elbow pointed down at their chest.',
+    controls: 'The head and posture standing. It pulls them down into snap-downs and front headlocks; from seated guard it pulls them into your hooks.',
+    setsUp: 'Snap-down to Turtle and front headlock, arm drag, foot sweeps, Butterfly sweeps when seated.',
+    breaking: 'Win inside position: post on their bicep, circle your head out, or shuck the elbow. Wrist control on the tying hand.',
+    confuse: 'The collar tie is no-gi and lives at the neck. A collar grip does the same posture job on the gi lapel.',
+  },
+  {
+    id: 'g-wrist', name: 'Wrist Control / Two-on-One', aliases: ['2-on-1', 'Russian tie', 'Hand fighting'], type: 'clinch', gi: 'both', usedBy: 'both',
+    positions: ['standing', 'closed-guard', 'mount', 's-mount', 'back-control', 'side-control', 'turtle', 'north-south'],
+    held: 'One hand on their wrist, thumb underneath. Two-on-one: both hands on the same arm, one at the wrist and one at the elbow or bicep, their elbow pinned to your chest.',
+    controls: 'One arm and its post. Winning the hand fight is the whole game in Back Control escapes and mounted attacks.',
+    setsUp: 'Standing: arm drag, two-on-one to the Back. Mount top: isolating the arm for the armbar. Back escape: two-on-one on the choking hand.',
+    breaking: 'Circle out toward the thumb, cross your own body, and re-post. Never pull straight back into the grip.',
+    confuse: '"Cross wrist" in no-gi is the same idea as a cross grip in the gi.',
+  },
+  {
+    id: 'g-crossface', name: 'Crossface', aliases: ['Cross face'], type: 'clinch', gi: 'both', usedBy: 'top',
+    positions: ['side-control', 'half-guard', 'north-south', 'mount', 'turtle'],
+    held: 'Forearm across the jaw or the side of the face, hand gripping the far shoulder or the mat, elbow driving the chin away from you.',
+    controls: 'The head, which turns the spine, which flattens the hips. A crossface removes the bottom player\'s ability to turn toward you and rebuild frames.',
+    setsUp: 'Knee cut pass, flattening Half Guard, Side Control pressure, arm triangle once the head is turned.',
+    breaking: 'Near-side frame in the elbow before it lands. If it lands, turn into it rather than away, and rebuild the frame on the bicep.',
+    confuse: 'Not a submission. It is a positional lever, called a crossface in gi and no-gi alike.',
+  },
+  {
+    id: 'g-seatbelt', name: 'Seatbelt', aliases: ['Harness', 'Over-under back grip'], type: 'clasp', gi: 'both', usedBy: 'top',
+    positions: ['back-control', 'body-triangle', 'back-mount-belly', 'turtle'],
+    held: 'One arm over the shoulder (the choking arm), the other under the armpit. Clasp the hands on their chest with the choking hand on top so it cannot be peeled.',
+    controls: 'The upper body from behind. It keeps you chest to back, and the over-arm is already at the neck.',
+    setsUp: 'Rear naked choke, arm trap, bow-and-arrow (gi), rolling to Back Control from Turtle.',
+    breaking: 'Two hands on the top (choking) hand, chin down, fall to the choking-arm side, then clear the bottom hook.',
+    confuse: 'Not a belt grip. "Harness" is the same clasp.',
+  },
+  {
+    id: 'g-gable', name: 'Gable Grip', aliases: ['Palm-to-palm'], type: 'clasp', gi: 'both', usedBy: 'both',
+    positions: ['standing', 'side-control', 'back-control', 'turtle', 'closed-guard'],
+    held: 'Palms together, fingers over the back of the opposite hand, no thumbs wrapped.',
+    controls: 'A closed loop that does not open under pressure. It is the clasp for bodylocks, guillotines, arm triangles, and seatbelts.',
+    setsUp: 'Bodylock pass, guillotine, kata gatame (arm triangle), front headlock, double-leg finish.',
+    breaking: 'Attack the wrist or the elbow of the loop rather than the fingers, and create an angle so the loop loses its line.',
+    confuse: 'The S-grip hooks the fingers; the gable is palm to palm. Gable is tighter, S-grip has more reach.',
+  },
+  {
+    id: 'g-s-grip', name: 'S-Grip', aliases: ['Finger hook'], type: 'clasp', gi: 'both', usedBy: 'both',
+    positions: ['standing', 'back-control', 'turtle', 'side-control'],
+    held: 'Fingers of both hands curled into hooks and hooked into each other, forming an S.',
+    controls: 'Reach. It closes around a bigger torso or head than a gable grip can. Use it when the gable will not close.',
+    setsUp: 'Bodylocks on a bigger partner, seatbelt variations, head-and-arm control, front headlock.',
+    breaking: 'Peel the fingers. The S-grip is the weakest clasp when attacked directly.',
+    confuse: 'See gable grip. Same jobs, more reach, less strength.',
+  },
+  {
+    id: 'g-kimura', name: 'Kimura Grip (figure-four)', aliases: ['Figure-four', 'Double wrist lock grip', 'Kimura trap'], type: 'clasp', gi: 'both', usedBy: 'both',
+    positions: ['half-guard', 'closed-guard', 'north-south', 'side-control', 'turtle', 'back-control', 'mount'],
+    held: 'Grab their wrist with one hand, thread your other arm over their upper arm, and grab your own wrist. The figure-four locks the shoulder.',
+    controls: 'The shoulder. Even without the finish, a kimura grip steers their whole upper body and stops them posting or turning.',
+    setsUp: 'Kimura, kimura sweep from Half Guard, back take from Turtle and Half Guard, passes from Side Control, escape from Back Control by locking the underhook arm.',
+    breaking: 'Grab your own belt or thigh before it locks, drive your elbow to the mat, roll with the direction of the twist, and posture out.',
+    confuse: 'Same grip whether you finish the kimura or use it to move. Coaches call the moving version the kimura trap.',
+  },
+  {
+    id: 'g-front-headlock', name: 'Front Headlock', aliases: ['Chin strap', 'Guillotine grip'], type: 'clinch', gi: 'both', usedBy: 'top',
+    positions: ['turtle', 'standing', 'half-guard'],
+    held: 'Arm wraps under the chin, hand on your own wrist or on their wrist (chin strap plus wrist control), chest heavy on the back of their head.',
+    controls: 'The head and one arm from the front. Their posture is broken and their hips have to follow their head.',
+    setsUp: 'Guillotine, anaconda, darce, spin to Back Control, snap-down to Side Control.',
+    breaking: 'Posture, hand on the choking wrist, circle your head toward the elbow side and drive forward, or sit through to Guard.',
+    confuse: 'The front headlock is a position. The guillotine is one submission from it.',
+  },
+  {
+    id: 'g-bodylock', name: 'Bodylock', aliases: ['Body lock'], type: 'clinch', gi: 'both', usedBy: 'top',
+    positions: ['standing', 'butterfly', 'half-guard', 'side-control'],
+    held: 'Both arms around the torso with a gable or S-grip, elbows tight, head on one side, hips low.',
+    controls: 'Hips and torso together. On the feet it is the takedown position; on the ground it flattens Butterfly and Half Guard.',
+    setsUp: 'Bodylock takedowns, bodylock pass to Side Control or Mount.',
+    breaking: 'Frames on the hips, hips back, then break the clasp at the fingers, or win an underhook and turn.',
+    confuse: 'A bodylock is a clinch with the arms. A body triangle is a leg lock around the waist from the Back.',
+  },
+  {
+    id: 'g-heel', name: 'Heel Grip (heel hook / ankle lock)', aliases: ['Heel exposure', 'Ankle lock grip'], type: 'legs', gi: 'both', usedBy: 'top',
+    positions: ['ashi', 'inside-sankaku', 'fifty-fifty', 'slx'],
+    held: 'Ankle lock: blade of the forearm under the achilles, gable grip. Heel hook: cup the heel in the crook of your elbow, clasp with the other hand, rotate toward the knee.',
+    controls: 'The finish of every leg entanglement. The knee line is the position; the heel grip is the submission.',
+    setsUp: 'Straight ankle lock, inside heel hook, outside heel hook.',
+    breaking: 'Hide the heel: toes pointed, foot booted by your other leg, knee driven through. Clear the knee line before fighting the hands.',
+    confuse: 'Grabbing the foot without controlling the knee line is not a heel hook. It is a scramble.',
+  },
+  {
+    id: 'g-monkey', name: 'Monkey Grip / C-Grip', aliases: ['Thumbless grip', 'C-cup'], type: 'legs', gi: 'both', usedBy: 'both',
+    positions: ['standing', 'butterfly', 'side-control', 'knee-on-belly', 'half-guard'],
+    held: 'Monkey grip: four fingers hooked without the thumb, used on ankles, wrists, and gi cuffs to save the fingers. C-grip: thumb and fingers form a C around a knee, ankle, or shoulder.',
+    controls: 'No-gi limb control: cupping the knee for a knee cut, the ankle to kill a hook, the tricep for a pass.',
+    setsUp: 'Knee cut, leg drag, toreando in no-gi. Ankle grips to strip Butterfly hooks.',
+    breaking: 'Straight-line pulls break a thumbless grip. Circle away from the fingers.',
+    confuse: 'These are hand shapes. They go on the same targets as pants and sleeve grips in the gi.',
+  },
+];
+const GRIP_BY_ID = Object.fromEntries(GRIPS.map(g => [g.id, g]));
+
+// =====================================================================
+// CARD KINDS
+// =====================================================================
+const POSITION_SECTIONS = [
   { key: 'top', label: 'Top objective', hint: 'what to go for next', field: 'top', labelField: 'topLabel' },
   { key: 'bottom', label: 'Bottom objective', hint: 'survival & recovery pathway', field: 'bottom', labelField: 'bottomLabel' },
   { key: 'dangers', label: 'Primary danger', hint: 'submission threats', field: 'dangers' },
   { key: 'wedge', label: 'Key wedge / frame', hint: 'geometry to look for', field: 'wedge' },
 ];
+const GRIP_SECTIONS = [
+  { key: 'held', label: 'How it is held', hint: 'recognise it', field: 'held' },
+  { key: 'controls', label: 'What it controls', hint: 'the control vector', field: 'controls' },
+  { key: 'positions', label: 'Where it shows up', hint: 'positions', field: 'positions', chips: true },
+  { key: 'setsUp', label: 'What it sets up', hint: 'go for next', field: 'setsUp' },
+  { key: 'breaking', label: 'How to break it', hint: 'if they have it on you', field: 'breaking' },
+];
+const KINDS = {
+  position: { label: 'position', sections: POSITION_SECTIONS, byId: NODE_BY_ID, all: NODES, cls: n => FAMILIES[n.family].cls, badge: n => FAMILIES[n.family].label, sub: n => `Tier ${n.tier}` },
+  grip: { label: 'grip', sections: GRIP_SECTIONS, byId: GRIP_BY_ID, all: GRIPS, cls: g => GRIP_TYPES[g.type].cls, badge: g => GRIP_TYPES[g.type].label, sub: g => GI_LABEL[g.gi] },
+};
+const kindOf = id => GRIP_BY_ID[id] ? 'grip' : 'position';
 
 // =====================================================================
 // STATE
 // =====================================================================
 const SRS_KEY = 'bjj-state-machine.srs.v1';
-const PREF_KEY = 'bjj-state-machine.prefs.v1';
+const PREF_KEY = 'bjj-state-machine.prefs.v2';
 const INTERVALS = [1, 3, 6, 12, 24]; // cards until a box-N card is due again
 
 const state = {
   mode: 'roadmap',
-  families: new Set(),
-  tiers: new Set(),
+  families: new Set(), tiers: new Set(), gripTypes: new Set(), gi: new Set(),
   currentId: null,
   revealed: new Set(),
   session: { shown: 0, got: 0, review: 0 },
+  call: null,
   srs: loadJSON(SRS_KEY, { counter: 0, cards: {} }),
-  prefs: loadJSON(PREF_KEY, { hidden: { top: true, bottom: true, dangers: true, wedge: true }, mode: 'roadmap' }),
+  prefs: loadJSON(PREF_KEY, { hidden: {}, mode: 'roadmap', deck: 'positions' }),
 };
+for (const k of Object.values(KINDS)) for (const s of k.sections) if (state.prefs.hidden[s.key] === undefined) state.prefs.hidden[s.key] = true;
 state.mode = state.prefs.mode || 'roadmap';
 
 function loadJSON(key, fallback) {
@@ -430,30 +708,49 @@ function filteredNodes() {
     (state.tiers.size === 0 || state.tiers.has(n.tier))
   );
 }
+function filteredGrips() {
+  return GRIPS.filter(g =>
+    (state.gripTypes.size === 0 || state.gripTypes.has(g.type)) &&
+    (state.gi.size === 0 || g.gi === 'both' || state.gi.has(g.gi))
+  );
+}
+function deckCards() {
+  const d = state.prefs.deck;
+  const p = d === 'grips' ? [] : filteredNodes();
+  const g = d === 'positions' ? [] : filteredGrips();
+  return [...p, ...g];
+}
+
+function chip(label, on, cls, onclick, title) {
+  const b = el('button', `${cls || ''} text-[11px] px-2.5 py-1 rounded border transition ${on ? (cls ? 'accent-border accent-text bg-slate-800' : 'border-slate-200 text-slate-100 bg-slate-800') : 'border-slate-700 text-slate-400 hover:text-slate-200 hover:border-slate-500'}`, label);
+  b.setAttribute('aria-pressed', on);
+  if (title) b.title = title;
+  b.onclick = onclick;
+  return b;
+}
+function fillChips(rootId, entries) {
+  const root = document.getElementById(rootId);
+  root.innerHTML = '';
+  for (const e of entries) root.appendChild(chip(e.label, e.on, e.cls, () => { toggle(e.set, e.value); rerender(); }, e.title));
+}
 
 function renderChips() {
-  const fam = document.getElementById('family-chips');
-  fam.innerHTML = '';
-  for (const [id, f] of Object.entries(FAMILIES)) {
-    const on = state.families.has(id);
-    const b = el('button', `${f.cls} chip text-[11px] px-2.5 py-1 rounded border transition ${on ? 'accent-border accent-text bg-slate-800' : 'border-slate-700 text-slate-400 hover:text-slate-200 hover:border-slate-500'}`, f.label);
-    b.setAttribute('aria-pressed', on);
-    b.onclick = () => { toggle(state.families, id); rerender(); };
-    fam.appendChild(b);
-  }
-  const tier = document.getElementById('tier-chips');
-  tier.innerHTML = '';
-  for (const t of TIERS) {
-    const on = state.tiers.has(t.n);
-    const b = el('button', `text-[11px] px-2.5 py-1 rounded border transition ${on ? 'border-slate-200 text-slate-100 bg-slate-800' : 'border-slate-700 text-slate-400 hover:text-slate-200 hover:border-slate-500'}`, `T${t.n}`);
-    b.title = t.label;
-    b.setAttribute('aria-pressed', on);
-    b.onclick = () => { toggle(state.tiers, t.n); rerender(); };
-    tier.appendChild(b);
-  }
-  const any = state.families.size || state.tiers.size;
+  fillChips('family-chips', Object.entries(FAMILIES).map(([id, f]) => ({ label: f.label, on: state.families.has(id), cls: f.cls, set: state.families, value: id })));
+  fillChips('tier-chips', TIERS.map(t => ({ label: `T${t.n}`, on: state.tiers.has(t.n), set: state.tiers, value: t.n, title: t.label })));
+  fillChips('grip-chips', Object.entries(GRIP_TYPES).map(([id, g]) => ({ label: g.label, on: state.gripTypes.has(id), cls: g.cls, set: state.gripTypes, value: id })));
+  fillChips('gi-chips', [['gi', 'gi'], ['nogi', 'no-gi']].map(([v, l]) => ({ label: l, on: state.gi.has(v), set: state.gi, value: v })));
+
+  const showPos = state.mode !== 'grips' && !(state.mode === 'cards' && state.prefs.deck === 'grips');
+  const showGrip = state.mode !== 'roadmap' && !(state.mode === 'cards' && state.prefs.deck === 'positions');
+  document.getElementById('filter-positions').hidden = !showPos;
+  document.getElementById('filter-grips').hidden = !showGrip;
+
+  const any = state.families.size || state.tiers.size || state.gripTypes.size || state.gi.size;
   document.getElementById('clear-filters').hidden = !any;
-  document.getElementById('filter-count').textContent = `${filteredNodes().length} / ${NODES.length} positions`;
+  const count = state.mode === 'grips' ? `${filteredGrips().length} / ${GRIPS.length} grips`
+    : state.mode === 'cards' ? `${deckCards().length} cards`
+    : `${filteredNodes().length} / ${NODES.length} positions`;
+  document.getElementById('filter-count').textContent = count;
 }
 function toggle(set, v) { set.has(v) ? set.delete(v) : set.add(v); }
 
@@ -467,23 +764,26 @@ function renderRoadmap() {
   for (const t of TIERS) {
     const nodes = visible.filter(n => n.tier === t.n);
     if (!nodes.length) continue;
-    const section = el('div', 'fade-in');
-    section.innerHTML = `
-      <div class="flex items-baseline gap-3 mb-3">
-        <span class="text-[10px] tracking-widest text-slate-500 border border-slate-700 rounded px-1.5 py-0.5">T${t.n}</span>
-        <h2 class="text-sm uppercase tracking-widest text-slate-200">${t.label}</h2>
-        <span class="h-px flex-1 bg-slate-800"></span>
-      </div>
-      <p class="text-[11px] text-slate-500 mb-3 max-w-3xl leading-relaxed">${t.desc}</p>
-      <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"></div>`;
-    const grid = section.querySelector('.grid');
-    for (const n of nodes) grid.appendChild(nodeCard(n));
-    root.appendChild(section);
+    root.appendChild(groupSection(`T${t.n}`, t.label, t.desc, nodes.map(nodeCard)));
   }
-  if (!visible.length) {
-    root.innerHTML = '<div class="rounded-lg border border-dashed border-slate-700 p-8 text-center text-sm text-slate-500">no positions match the current filters.</div>';
-  }
+  if (!visible.length) root.innerHTML = emptyMsg('no positions match the current filters.');
 }
+
+function groupSection(tag, label, desc, cards) {
+  const section = el('div', 'fade-in');
+  section.innerHTML = `
+    <div class="flex items-baseline gap-3 mb-3">
+      <span class="text-[10px] tracking-widest text-slate-500 border border-slate-700 rounded px-1.5 py-0.5">${tag}</span>
+      <h2 class="text-sm uppercase tracking-widest text-slate-200">${label}</h2>
+      <span class="h-px flex-1 bg-slate-800"></span>
+    </div>
+    <p class="text-[11px] text-slate-500 mb-3 max-w-3xl leading-relaxed">${desc}</p>
+    <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"></div>`;
+  const grid = section.querySelector('.grid');
+  cards.forEach(c => grid.appendChild(c));
+  return section;
+}
+const emptyMsg = t => `<div class="rounded-lg border border-dashed border-slate-700 p-8 text-center text-sm text-slate-500">${t}</div>`;
 
 function nodeCard(n) {
   const f = FAMILIES[n.family];
@@ -504,57 +804,50 @@ function nodeCard(n) {
 }
 
 // =====================================================================
+// GRIPS VIEW
+// =====================================================================
+function renderGrips() {
+  const root = document.getElementById('view-grips');
+  root.innerHTML = '';
+  const visible = filteredGrips();
+  for (const [id, t] of Object.entries(GRIP_TYPES)) {
+    const grips = visible.filter(g => g.type === id);
+    if (!grips.length) continue;
+    root.appendChild(groupSection('grip', t.label, t.desc, grips.map(gripCard)));
+  }
+  if (!visible.length) root.innerHTML = emptyMsg('no grips match the current filters.');
+}
+
+function gripCard(g) {
+  const t = GRIP_TYPES[g.type];
+  const c = el('button', `${t.cls} accent-ring text-left rounded-lg border border-slate-700 bg-slate-900/80 p-4 transition w-full min-w-0 overflow-hidden`);
+  c.innerHTML = `
+    <div class="flex items-center gap-2 mb-2">
+      <span class="w-1.5 h-1.5 rounded-full accent-bg"></span>
+      <span class="text-[10px] uppercase tracking-widest accent-text">${t.label}</span>
+      <span class="ml-auto text-[10px] text-slate-500">${GI_LABEL[g.gi]}</span>
+    </div>
+    <h3 class="text-sm font-semibold text-slate-100 leading-snug">${g.name}</h3>
+    ${g.aliases.length ? `<div class="text-[10px] text-slate-500 mt-0.5 truncate">aka ${g.aliases.join(', ')}</div>` : ''}
+    <div class="mt-3 space-y-1 text-[11px]">
+      <div class="flex gap-2"><span class="text-slate-500 w-8 shrink-0">who</span><span class="text-slate-300">${g.usedBy === 'both' ? 'top or bottom' : g.usedBy}</span></div>
+      <div class="flex gap-2"><span class="text-slate-500 w-8 shrink-0">at</span><span class="text-slate-300 truncate min-w-0">${g.positions.map(id => NODE_BY_ID[id].name).join(', ')}</span></div>
+    </div>`;
+  c.onclick = () => openDrawer(g.id);
+  return c;
+}
+
+// =====================================================================
 // DRAWER
 // =====================================================================
 function openDrawer(id) {
-  const n = NODE_BY_ID[id];
-  const f = FAMILIES[n.family];
-  const t = TIERS[n.tier];
-  const d = document.getElementById('drawer');
   const c = document.getElementById('drawer-content');
-  c.className = `p-5 sm:p-6 ${f.cls}`;
-  c.innerHTML = `
-    <div class="flex items-start justify-between gap-4 mb-4">
-      <div>
-        <div class="flex items-center gap-2 mb-2">
-          <span class="text-[10px] uppercase tracking-widest accent-text border accent-border rounded px-1.5 py-0.5">${f.label}</span>
-          <span class="text-[10px] uppercase tracking-widest text-slate-400 border border-slate-700 rounded px-1.5 py-0.5">T${n.tier} · ${t.label}</span>
-        </div>
-        <h2 class="text-xl font-semibold text-slate-50 leading-tight">${n.name}</h2>
-      </div>
-      <button id="drawer-close" class="text-slate-500 hover:text-slate-100 text-lg leading-none px-2" aria-label="Close">×</button>
-    </div>
-    <p class="text-sm text-slate-300 leading-relaxed mb-6">${n.summary}</p>
-
-    ${routeBlock('If on top · advancing', n.topLabel, n.topRoute)}
-    ${routeBlock('If on bottom · escaping / recovering', n.bottomLabel, n.bottomRoute)}
-
-    <div class="space-y-4 mt-6">
-      ${SECTIONS.map(s => `
-        <div>
-          <h4 class="text-[10px] uppercase tracking-widest text-slate-500 mb-1">${s.label}${s.labelField ? ` <span class="text-slate-600">· ${n[s.labelField]}</span>` : ''}</h4>
-          <p class="text-[13px] text-slate-300 leading-relaxed">${n[s.field]}</p>
-        </div>`).join('')}
-    </div>
-
-    <div class="mt-6 grid grid-cols-2 gap-3">
-      ${nextList('Promotes to (top)', n.topNext)}
-      ${nextList('Recovers to (bottom)', n.bottomNext)}
-    </div>
-
-    <div class="mt-6 pt-4 border-t border-slate-800">
-      <h4 class="text-[10px] uppercase tracking-widest text-slate-500 mb-2">Reached from</h4>
-      <div class="flex flex-wrap gap-1.5">${
-        NODES.filter(m => m.topNext.includes(n.id) || m.bottomNext.includes(n.id))
-          .map(m => nodeChip(m.id)).join('') || '<span class="text-[11px] text-slate-600">—</span>'
-      }</div>
-    </div>
-
-    <button id="drawer-drill" class="mt-6 w-full text-xs uppercase tracking-wider px-3 py-2 rounded border border-slate-600 hover:border-slate-300 text-slate-200">drill this card →</button>
-  `;
+  c.innerHTML = kindOf(id) === 'grip' ? gripDrawer(GRIP_BY_ID[id]) : nodeDrawer(NODE_BY_ID[id]);
+  c.className = `p-5 sm:p-6 ${KINDS[kindOf(id)].cls(KINDS[kindOf(id)].byId[id])}`;
   c.querySelector('#drawer-close').onclick = closeDrawer;
-  c.querySelector('#drawer-drill').onclick = () => { closeDrawer(); setMode('cards'); showCard(n.id); };
+  c.querySelector('#drawer-drill').onclick = () => { closeDrawer(); setMode('cards'); showCard(id); };
   c.querySelectorAll('[data-goto]').forEach(b => b.onclick = () => openDrawer(b.dataset.goto));
+  const d = document.getElementById('drawer');
   document.getElementById('drawer-backdrop').hidden = false;
   d.classList.remove('translate-x-full');
   d.setAttribute('aria-hidden', 'false');
@@ -566,25 +859,88 @@ function closeDrawer() {
   d.setAttribute('aria-hidden', 'true');
   document.getElementById('drawer-backdrop').hidden = true;
 }
+function drawerHeader(badges, title) {
+  return `
+    <div class="flex items-start justify-between gap-4 mb-4">
+      <div>
+        <div class="flex flex-wrap items-center gap-2 mb-2">${badges}</div>
+        <h2 class="text-xl font-semibold text-slate-50 leading-tight">${title}</h2>
+      </div>
+      <button id="drawer-close" class="text-slate-500 hover:text-slate-100 text-lg leading-none px-2" aria-label="Close">×</button>
+    </div>`;
+}
+const badge = (text, accent) => `<span class="text-[10px] uppercase tracking-widest ${accent ? 'accent-text border accent-border' : 'text-slate-400 border border-slate-700'} rounded px-1.5 py-0.5">${text}</span>`;
+
+function nodeDrawer(n) {
+  const f = FAMILIES[n.family];
+  const t = TIERS[n.tier];
+  const gripsHere = GRIPS.filter(g => g.positions.includes(n.id));
+  return `
+    ${drawerHeader(badge(f.label, true) + badge(`T${n.tier} · ${t.label}`), n.name)}
+    <p class="text-sm text-slate-300 leading-relaxed mb-6">${n.summary}</p>
+    ${routeBlock('If on top · advancing', n.topLabel, n.topRoute)}
+    ${routeBlock('If on bottom · escaping / recovering', n.bottomLabel, n.bottomRoute)}
+    <div class="space-y-4 mt-6">
+      ${POSITION_SECTIONS.map(s => `
+        <div>
+          <h4 class="text-[10px] uppercase tracking-widest text-slate-500 mb-1">${s.label}${s.labelField ? ` <span class="text-slate-600">· ${n[s.labelField]}</span>` : ''}</h4>
+          <p class="text-[13px] text-slate-300 leading-relaxed">${n[s.field]}</p>
+        </div>`).join('')}
+    </div>
+    <div class="mt-6 grid grid-cols-2 gap-3">
+      ${chipList('Promotes to (top)', n.topNext)}
+      ${chipList('Recovers to (bottom)', n.bottomNext)}
+    </div>
+    <div class="mt-6 pt-4 border-t border-slate-800">
+      ${chipList('Grips you will hear called here', gripsHere.map(g => g.id))}
+    </div>
+    <div class="mt-4">
+      ${chipList('Reached from', NODES.filter(m => m.topNext.includes(n.id) || m.bottomNext.includes(n.id)).map(m => m.id))}
+    </div>
+    <button id="drawer-drill" class="mt-6 w-full text-xs uppercase tracking-wider px-3 py-2 rounded border border-slate-600 hover:border-slate-300 text-slate-200">drill this card →</button>`;
+}
+
+function gripDrawer(g) {
+  const t = GRIP_TYPES[g.type];
+  return `
+    ${drawerHeader(badge(t.label, true) + badge(GI_LABEL[g.gi]) + badge(g.usedBy === 'both' ? 'top or bottom' : `${g.usedBy} holds it`), g.name)}
+    ${g.aliases.length ? `<p class="text-[11px] text-slate-500 mb-4">also called: ${g.aliases.join(' · ')}</p>` : ''}
+    <div class="space-y-4">
+      ${GRIP_SECTIONS.filter(s => !s.chips).map(s => `
+        <div>
+          <h4 class="text-[10px] uppercase tracking-widest text-slate-500 mb-1">${s.label}</h4>
+          <p class="text-[13px] text-slate-300 leading-relaxed">${g[s.field]}</p>
+        </div>`).join('')}
+      <div>
+        <h4 class="text-[10px] uppercase tracking-widest text-slate-500 mb-1">Do not confuse with</h4>
+        <p class="text-[13px] text-slate-300 leading-relaxed">${g.confuse}</p>
+      </div>
+    </div>
+    <div class="mt-6 pt-4 border-t border-slate-800">
+      ${chipList('Positions where it shows up', g.positions)}
+    </div>
+    <button id="drawer-drill" class="mt-6 w-full text-xs uppercase tracking-wider px-3 py-2 rounded border border-slate-600 hover:border-slate-300 text-slate-200">drill this card →</button>`;
+}
+
 function routeBlock(title, role, steps) {
   return `
     <div class="mb-4">
       <h4 class="text-[10px] uppercase tracking-widest text-slate-500 mb-2">${title} <span class="text-slate-600">· ${role}</span></h4>
       <div class="flex flex-wrap items-center gap-1.5">${steps.map((s, i) =>
         (i ? '<span class="text-slate-600 text-[11px]">→</span>' : '') +
-        (s.startsWith('@') ? nodeChip(s.slice(1)) : `<span class="text-[11px] text-slate-300 bg-slate-800/80 rounded px-2 py-0.5">${s}</span>`)
+        (s.startsWith('@') ? idChip(s.slice(1)) : `<span class="text-[11px] text-slate-300 bg-slate-800/80 rounded px-2 py-0.5">${s}</span>`)
       ).join('')}</div>
     </div>`;
 }
-function nodeChip(id) {
-  const m = NODE_BY_ID[id];
-  const f = FAMILIES[m.family];
-  return `<button data-goto="${id}" class="${f.cls} text-[11px] accent-text border accent-border rounded px-2 py-0.5 hover:bg-slate-800">${m.name}</button>`;
+function idChip(id) {
+  const k = KINDS[kindOf(id)];
+  const o = k.byId[id];
+  return `<button data-goto="${id}" class="${k.cls(o)} text-[11px] accent-text border accent-border rounded px-2 py-0.5 hover:bg-slate-800">${o.name}</button>`;
 }
-function nextList(title, ids) {
+function chipList(title, ids) {
   return `<div>
     <h4 class="text-[10px] uppercase tracking-widest text-slate-500 mb-2">${title}</h4>
-    <div class="flex flex-wrap gap-1.5">${ids.map(nodeChip).join('')}</div>
+    <div class="flex flex-wrap gap-1.5">${ids.map(idChip).join('') || '<span class="text-[11px] text-slate-600">—</span>'}</div>
   </div>`;
 }
 
@@ -592,7 +948,7 @@ function nextList(title, ids) {
 // FLASHCARDS + SPACED REPETITION
 // =====================================================================
 function pickNext(excludeId) {
-  const deck = filteredNodes();
+  const deck = deckCards();
   if (!deck.length) return null;
   const c = state.srs.counter;
   const scored = deck.map(n => ({ n, s: cardState(n.id) }));
@@ -604,48 +960,49 @@ function pickNext(excludeId) {
 }
 
 function showCard(id) {
-  const n = id ? NODE_BY_ID[id] : pickNext(state.currentId);
+  const n = id ? KINDS[kindOf(id)].byId[id] : pickNext(state.currentId);
   const card = document.getElementById('flashcard');
   const empty = document.getElementById('deck-empty');
   if (!n) { card.hidden = true; empty.hidden = false; renderDeckStatus(); return; }
   card.hidden = false; empty.hidden = true;
   state.currentId = n.id;
-  state.revealed = new Set(SECTIONS.filter(s => !state.prefs.hidden[s.key]).map(s => s.key));
-  const f = FAMILIES[n.family];
-  card.className = `rounded-lg border border-slate-700 bg-slate-900/90 p-5 sm:p-7 fade-in accent-glow ${f.cls}`;
+  const k = KINDS[kindOf(n.id)];
+  state.revealed = new Set(k.sections.filter(s => !state.prefs.hidden[s.key]).map(s => s.key));
+  card.className = `rounded-lg border border-slate-700 bg-slate-900/90 p-5 sm:p-7 fade-in accent-glow ${k.cls(n)}`;
   card.style.animation = 'none'; void card.offsetWidth; card.style.animation = '';
-  document.getElementById('fc-badges').innerHTML = `
-    <span class="text-[10px] uppercase tracking-widest accent-text border accent-border rounded px-1.5 py-0.5">${f.label}</span>
-    <span class="text-[10px] uppercase tracking-widest text-slate-400 border border-slate-700 rounded px-1.5 py-0.5">Tier ${n.tier}</span>
-    <span class="text-[10px] text-slate-600">box ${cardState(n.id).box}</span>`;
+  document.getElementById('fc-badges').innerHTML = badge(k.badge(n), true) + badge(k.sub(n)) + `<span class="text-[10px] text-slate-600">${k.label} · box ${cardState(n.id).box}</span>`;
   document.getElementById('fc-name').textContent = n.name;
-  document.getElementById('fc-summary').textContent = n.summary;
+  document.getElementById('fc-summary').textContent = n.summary || (n.aliases && n.aliases.length ? 'also called: ' + n.aliases.join(', ') : '');
   renderSections();
   renderDeckStatus();
 }
 
 function renderSections() {
-  const n = NODE_BY_ID[state.currentId];
+  const n = KINDS[kindOf(state.currentId)].byId[state.currentId];
+  const k = KINDS[kindOf(state.currentId)];
   const root = document.getElementById('fc-sections');
   root.innerHTML = '';
-  for (const s of SECTIONS) {
+  for (const s of k.sections) {
     const open = state.revealed.has(s.key);
     const box = el('div', `rounded border ${open ? 'border-slate-700 bg-slate-800/40' : 'border-slate-800 bg-slate-900/40'}`);
+    const body = s.chips ? `<div class="flex flex-wrap gap-1.5">${n[s.field].map(idChip).join('')}</div>` : n[s.field];
     box.innerHTML = `
       <button class="w-full flex items-center gap-3 px-3 py-2 text-left" data-sec="${s.key}">
         <span class="text-[10px] uppercase tracking-widest ${open ? 'text-slate-200' : 'text-slate-400'}">${s.label}</span>
         <span class="text-[10px] text-slate-600 hidden sm:inline">${s.hint}${s.labelField ? ' · ' + n[s.labelField] : ''}</span>
         <span class="ml-auto text-[10px] ${open ? 'text-slate-600' : 'accent-text'}">${open ? 'hide' : 'reveal'}</span>
       </button>
-      <div class="reveal-body px-3 pb-3 text-[13px] text-slate-300 leading-relaxed" ${open ? '' : 'hidden'}>${n[s.field]}</div>`;
-    box.querySelector('button').onclick = () => { toggle(state.revealed, s.key); renderSections(); };
+      <div class="px-3 pb-3 text-[13px] text-slate-300 leading-relaxed" ${open ? '' : 'hidden'}>${body}</div>`;
+    box.querySelector('button[data-sec]').onclick = () => { toggle(state.revealed, s.key); renderSections(); };
+    box.querySelectorAll('[data-goto]').forEach(b => b.onclick = () => openDrawer(b.dataset.goto));
     root.appendChild(box);
   }
 }
 
 function revealAll() {
-  if (state.revealed.size === SECTIONS.length) state.revealed.clear();
-  else SECTIONS.forEach(s => state.revealed.add(s.key));
+  const sections = KINDS[kindOf(state.currentId)].sections;
+  if (state.revealed.size === sections.length) state.revealed.clear();
+  else sections.forEach(s => state.revealed.add(s.key));
   renderSections();
 }
 
@@ -669,13 +1026,21 @@ function answer(gotIt) {
   showCard();
 }
 
+function renderDeckChips() {
+  const root = document.getElementById('deck-chips');
+  root.innerHTML = '';
+  for (const [v, l] of [['positions', 'positions'], ['grips', 'grips'], ['both', 'both']]) {
+    root.appendChild(chip(l, state.prefs.deck === v, '', () => { state.prefs.deck = v; saveJSON(PREF_KEY, state.prefs); rerender(); }));
+  }
+}
+
 function renderDeckStatus() {
-  const deck = filteredNodes();
+  const deck = deckCards();
   const due = deck.filter(n => cardState(n.id).due <= state.srs.counter).length;
   document.getElementById('deck-status').innerHTML = `
-    <span><span class="text-slate-200">${deck.length}</span> cards in deck</span>
+    <span><span class="text-slate-200">${deck.length}</span> cards</span>
     <span><span class="text-slate-200">${due}</span> due now</span>
-    <span>queue position <span class="text-slate-200">#${state.srs.counter}</span></span>`;
+    <span>queue <span class="text-slate-200">#${state.srs.counter}</span></span>`;
   const st = state.session;
   const acc = st.shown ? Math.round(100 * st.got / st.shown) : null;
   document.getElementById('session-stats').innerHTML = [
@@ -695,15 +1060,97 @@ function renderDeckStatus() {
 function renderHideToggles() {
   const root = document.getElementById('hide-toggles');
   root.innerHTML = '';
-  for (const s of SECTIONS) {
-    const label = el('label', 'flex items-center gap-2 text-[11px] text-slate-300 cursor-pointer');
-    const cb = document.createElement('input');
-    cb.type = 'checkbox'; cb.checked = !!state.prefs.hidden[s.key];
-    cb.className = 'accent-slate-300';
-    cb.onchange = () => { state.prefs.hidden[s.key] = cb.checked; saveJSON(PREF_KEY, state.prefs); };
-    label.append(cb, document.createTextNode(s.label));
-    root.appendChild(label);
+  for (const [kind, k] of Object.entries(KINDS)) {
+    const group = el('div', 'space-y-1.5');
+    group.appendChild(el('div', 'text-[10px] text-slate-600', kind + ' cards'));
+    for (const s of k.sections) {
+      const label = el('label', 'flex items-center gap-2 text-[11px] text-slate-300 cursor-pointer');
+      const cb = document.createElement('input');
+      cb.type = 'checkbox'; cb.checked = !!state.prefs.hidden[s.key];
+      cb.className = 'accent-slate-300';
+      cb.onchange = () => { state.prefs.hidden[s.key] = cb.checked; saveJSON(PREF_KEY, state.prefs); };
+      label.append(cb, document.createTextNode(s.label));
+      group.appendChild(label);
+    }
+    root.appendChild(group);
   }
+}
+
+// =====================================================================
+// SPARRING CALL
+// =====================================================================
+const rand = arr => arr[Math.floor(Math.random() * arr.length)];
+
+function renderCallSelects() {
+  const pos = document.getElementById('call-pos');
+  const keep = pos.value;
+  pos.innerHTML = '<option value="random">random position</option>' + filteredNodes().map(n => `<option value="${n.id}">${n.name}</option>`).join('');
+  if ([...pos.options].some(o => o.value === keep)) pos.value = keep;
+  const grip = document.getElementById('call-grip');
+  const keepG = grip.value;
+  grip.innerHTML = '<option value="random">random grip</option><option value="none">no grip called</option>' + filteredGrips().map(g => `<option value="${g.id}">${g.name}</option>`).join('');
+  if ([...grip.options].some(o => o.value === keepG)) grip.value = keepG;
+}
+
+function newCall() {
+  const posSel = document.getElementById('call-pos').value;
+  const roleSel = document.getElementById('call-role').value;
+  const gripSel = document.getElementById('call-grip').value;
+  const nodes = filteredNodes();
+  if (!nodes.length) { state.call = null; renderCall(); return; }
+  const n = posSel === 'random' ? rand(nodes) : NODE_BY_ID[posSel];
+
+  let g = null, holder = null;
+  if (gripSel !== 'none') {
+    let cands = filteredGrips().filter(x => x.positions.includes(n.id));
+    if (gripSel !== 'random') cands = [GRIP_BY_ID[gripSel]];
+    if (roleSel !== 'random') cands = cands.filter(x => x.usedBy === 'both' || x.usedBy === roleSel || gripSel !== 'random');
+    if (cands.length) {
+      g = rand(cands);
+      holder = roleSel !== 'random' ? roleSel : (g.usedBy === 'both' ? rand(['top', 'bottom']) : g.usedBy);
+    }
+  }
+  state.call = { n, g, holder, revealed: false };
+  renderCall();
+}
+
+function renderCall() {
+  const card = document.getElementById('call-card');
+  const text = document.getElementById('call-text');
+  const sub = document.getElementById('call-sub');
+  const rev = document.getElementById('call-reveal');
+  if (!state.call) {
+    card.className = 'rounded-lg border border-slate-700 bg-slate-900/90 p-5 sm:p-7';
+    text.textContent = 'no positions match the current filters.';
+    sub.textContent = ''; rev.hidden = true; return;
+  }
+  const { n, g, holder, revealed } = state.call;
+  card.className = `rounded-lg border border-slate-700 bg-slate-900/90 p-5 sm:p-7 accent-glow ${FAMILIES[n.family].cls}`;
+  text.innerHTML = `"${n.name}${g ? `, ${holder} player starts with ${g.name.replace(/\s*\(.*\)$/, '').toLowerCase()}` : ', neutral grips'}."`;
+  sub.textContent = `${FAMILIES[n.family].label} · tier ${n.tier} · top = ${n.topLabel.toLowerCase()} · bottom = ${n.bottomLabel.toLowerCase()}${g ? ` · grip: ${GRIP_TYPES[g.type].label.toLowerCase()}, ${GI_LABEL[g.gi]}` : ''}`;
+  rev.hidden = !revealed;
+  document.getElementById('call-show').textContent = revealed ? 'hide' : 'reveal destinations';
+  if (!revealed) return;
+  const other = holder === 'top' ? 'bottom' : 'top';
+  rev.innerHTML = `
+    ${routeBlock('Bottom destination', n.bottomLabel, n.bottomRoute)}
+    ${routeBlock('Top destination', n.topLabel, n.topRoute)}
+    ${g ? `
+    <div class="rounded border border-slate-800 bg-slate-800/30 p-3 space-y-3">
+      <div>
+        <h4 class="text-[10px] uppercase tracking-widest text-slate-500 mb-1">${holder} has the ${g.name} · what it sets up</h4>
+        <p class="text-[13px] text-slate-300 leading-relaxed">${g.setsUp}</p>
+      </div>
+      <div>
+        <h4 class="text-[10px] uppercase tracking-widest text-slate-500 mb-1">${other} · break it first</h4>
+        <p class="text-[13px] text-slate-300 leading-relaxed">${g.breaking}</p>
+      </div>
+    </div>` : ''}
+    <div class="flex flex-wrap gap-2 pt-1">
+      <button data-goto="${n.id}" class="text-[10px] uppercase tracking-widest text-slate-400 hover:text-slate-100 border border-slate-700 rounded px-2 py-1">position detail ↗</button>
+      ${g ? `<button data-goto="${g.id}" class="text-[10px] uppercase tracking-widest text-slate-400 hover:text-slate-100 border border-slate-700 rounded px-2 py-1">grip detail ↗</button>` : ''}
+    </div>`;
+  rev.querySelectorAll('[data-goto]').forEach(b => b.onclick = () => openDrawer(b.dataset.goto));
 }
 
 // =====================================================================
@@ -712,24 +1159,31 @@ function renderHideToggles() {
 function setMode(mode) {
   state.mode = mode;
   state.prefs.mode = mode; saveJSON(PREF_KEY, state.prefs);
-  document.getElementById('view-roadmap').hidden = mode !== 'roadmap';
-  document.getElementById('view-cards').hidden = mode !== 'cards';
+  for (const m of ['roadmap', 'grips', 'cards', 'call']) document.getElementById('view-' + m).hidden = mode !== m;
   document.querySelectorAll('.mode-tab').forEach(b => {
     const on = b.dataset.mode === mode;
     b.className = `mode-tab px-3 py-1 text-xs uppercase tracking-wider rounded ${on ? 'bg-slate-100 text-slate-900' : 'text-slate-400 hover:text-slate-100'}`;
     b.setAttribute('aria-selected', on);
   });
-  if (mode === 'cards' && (!state.currentId || !filteredNodes().some(n => n.id === state.currentId))) showCard();
-  else if (mode === 'cards') renderDeckStatus();
+  renderChips();
+  if (mode === 'cards') {
+    renderDeckChips();
+    if (!state.currentId || !deckCards().some(n => n.id === state.currentId)) showCard();
+    else renderDeckStatus();
+  }
+  if (mode === 'call') { renderCallSelects(); if (!state.call) newCall(); }
 }
 
 function rerender() {
   renderChips();
   renderRoadmap();
+  renderGrips();
   if (state.mode === 'cards') {
-    if (!filteredNodes().some(n => n.id === state.currentId)) showCard();
+    renderDeckChips();
+    if (!deckCards().some(n => n.id === state.currentId)) showCard();
     else renderDeckStatus();
   }
+  if (state.mode === 'call') renderCallSelects();
 }
 
 function el(tag, cls, text) {
@@ -740,12 +1194,14 @@ function el(tag, cls, text) {
 }
 
 document.querySelectorAll('.mode-tab').forEach(b => b.onclick = () => setMode(b.dataset.mode));
-document.getElementById('clear-filters').onclick = () => { state.families.clear(); state.tiers.clear(); rerender(); };
+document.getElementById('clear-filters').onclick = () => { state.families.clear(); state.tiers.clear(); state.gripTypes.clear(); state.gi.clear(); rerender(); };
 document.getElementById('drawer-backdrop').onclick = closeDrawer;
 document.getElementById('fc-reveal-all').onclick = revealAll;
 document.getElementById('fc-got').onclick = () => answer(true);
 document.getElementById('fc-review').onclick = () => answer(false);
 document.getElementById('fc-open-node').onclick = () => state.currentId && openDrawer(state.currentId);
+document.getElementById('call-new').onclick = newCall;
+document.getElementById('call-show').onclick = () => { if (state.call) { state.call.revealed = !state.call.revealed; renderCall(); } };
 document.getElementById('reset-progress').onclick = () => {
   if (!confirm('Reset all retention progress?')) return;
   state.srs = { counter: 0, cards: {} };
@@ -755,16 +1211,22 @@ document.getElementById('reset-progress').onclick = () => {
 };
 
 document.addEventListener('keydown', e => {
-  if (e.target.matches('input, textarea')) return;
+  if (e.target.matches('input, textarea, select')) return;
   if (e.key === 'Escape') return closeDrawer();
-  if (state.mode !== 'cards' || !document.getElementById('drawer-backdrop').hidden) return;
-  if (e.key === ' ') { e.preventDefault(); revealAll(); }
-  else if (e.key === '1') answer(true);
-  else if (e.key === '2') answer(false);
+  if (!document.getElementById('drawer-backdrop').hidden) return;
+  if (state.mode === 'cards') {
+    if (e.key === ' ') { e.preventDefault(); revealAll(); }
+    else if (e.key === '1') answer(true);
+    else if (e.key === '2') answer(false);
+  } else if (state.mode === 'call') {
+    if (e.key === ' ') { e.preventDefault(); document.getElementById('call-show').click(); }
+    else if (e.key === 'n' || e.key === 'N') newCall();
+  }
 });
 
 renderChips();
 renderRoadmap();
+renderGrips();
 renderHideToggles();
 setMode(state.mode);
 </script>
