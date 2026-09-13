@@ -713,13 +713,24 @@ const V = (file, note, credit) => ({ ...C(file, note), credit, verified: true })
 const OWN = (id, note) => ({ src: `img/${id}.jpg`, page: '', credit: 'own training footage', note: note || '', verified: true });
 
 const MEDIA_SEED = {
-  'closed-guard': [V('Brazilian Jiu-jitsu Kimura lock from guard.jpg', 'kimura from guard, US Army demonstration', 'PFC Linsey Williams, public domain, via Wikimedia Commons')],
-  'half-guard': [V('BJJ-half guard.jpg', 'half guard, bottom player has one leg wrapped', 'parhessiastes, CC BY-SA 2.0, via Wikimedia Commons')],
-  'ashi': [V('Leglock straight ankle lock.jpg', 'straight ankle lock from ashi garami, low-resolution field-manual photo', 'US Army field manual, public domain, via Wikimedia Commons')],
+  'closed-guard': [OWN('closed-guard', 'closed guard, ankles crossed behind the top player'), V('Brazilian Jiu-jitsu Kimura lock from guard.jpg', 'kimura from guard, US Army demonstration', 'PFC Linsey Williams, public domain, via Wikimedia Commons')],
+  'half-guard': [OWN('half-guard', 'half guard, bottom player wraps the top player\'s left leg'), V('BJJ-half guard.jpg', 'half guard, bottom player has one leg wrapped', 'parhessiastes, CC BY-SA 2.0, via Wikimedia Commons')],
+  'ashi': [OWN('ashi', 'ashi garami, top player\'s leg trapped between the bottom player\'s legs, foot on the hip')],
   'north-south': [V('North–south choke.JPG', 'north-south choke, chest on face', 'Jdcollins13, CC BY-SA 3.0, via Wikimedia Commons')],
-  'back-control': [V('Back mount.jpg', 'back control with hooks in, gi', 'public domain, via Wikimedia Commons'), V('Submission Grappling - rear naked choke.jpg', 'rear naked choke from back control', 'MartialArtsNomad.com, CC BY 2.0, via Wikimedia Commons')],
-  'turtle': [V('Back mount - Submission grappling at 2010 Western Canadian Martial Arts Championships.jpg', 'turtle with the top player riding the back', 'MartialArtsNomad.com, CC BY 2.0, via Wikimedia Commons')],
+  'back-control': [OWN('back-control', 'seated back control, hook in, seatbelt on'), V('Back mount.jpg', 'back control with hooks in, gi', 'public domain, via Wikimedia Commons'), V('Submission Grappling - rear naked choke.jpg', 'rear naked choke from back control', 'MartialArtsNomad.com, CC BY 2.0, via Wikimedia Commons')],
+  'turtle': [OWN('turtle', 'turtle with the top player sprawled over the back'), V('Back mount - Submission grappling at 2010 Western Canadian Martial Arts Championships.jpg', 'turtle with the top player riding the back', 'MartialArtsNomad.com, CC BY 2.0, via Wikimedia Commons')],
   'g-kimura': [OWN('g-kimura', 'figure-four kimura grip from the top, annotated demo frame'), V('Brazilian Jiu-jitsu Kimura lock from guard.jpg', 'figure-four kimura grip from guard', 'PFC Linsey Williams, public domain, via Wikimedia Commons')],
+  'side-control': [OWN('side-control', 'side control, chest on chest, arm under the head')],
+  'knee-on-belly': [{ src: 'img/knee-on-belly.jpg', page: '', credit: 'Submeta still, personal use only', note: 'knee on belly, shin across the stomach, far leg posted', verified: true }],
+  'mount': [{ src: 'img/mount.jpg', page: '', credit: 'Submeta still, personal use only', note: 'mount after a side-control reversal, hips over hips', verified: true }],
+  'butterfly': [OWN('butterfly', 'butterfly guard, seated with a hook under the top player\'s thigh')],
+  'body-triangle': [OWN('body-triangle', 'body triangle from the back, legs figure-foured around the waist')],
+  'back-mount-belly': [OWN('back-mount-belly', 'back mount with the bottom player flat on their belly')],
+  'g-crossface': [OWN('g-crossface', 'crossface from side control, arm under the head turning the face away')],
+  'g-seatbelt': [OWN('g-seatbelt', 'seatbelt from the back, one arm over the shoulder and one under the armpit')],
+  'g-wrist': [OWN('g-wrist', 'two-on-one wrist control from the back')],
+  'g-front-headlock': [OWN('g-front-headlock', 'front headlock on a turtled partner, arms wrapped around head and arm')],
+  'g-underhook': [{ src: 'img/g-underhook.jpg', page: '', credit: 'Submeta still, personal use only', note: 'underhook from the bottom while escaping side control', verified: true }],
   'g-bodylock': [V('Body Lock (6455271627).jpg', 'rear bodylock in wrestling, opponent on all fours', 'Chris Hunkeler, CC BY-SA 2.0, via Wikimedia Commons')],
 };
 // Paste exported JSON from the Quiz tab here to make your edits permanent.
