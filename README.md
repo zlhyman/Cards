@@ -7,6 +7,8 @@ Single-file flashcard and positional roadmap app for no-gi Brazilian Jiu-Jitsu, 
 - Roadmap view: every position ranked by tier (0 neutral through 5 ultimate control), color-coded by family. Click a node for the deep-dive drawer with top promotion route, bottom recovery route, dangers, the key wedge or frame, and the grips you will hear called there.
 - Grips view: 21 grips grouped by type (collar and lapel, sleeve and pants, clinch and ties, hand clasps, leg and foot). Each one covers how it is held, what it controls, where it shows up, what it sets up, how to break it, and what it is commonly confused with.
 - Flashcard view: pick the positions deck, the grips deck, or both. Answer sections stay hidden until revealed. "Got it" and "Needs review" drive a Leitner-style queue that persists in localStorage.
+- Quiz view: shows a photo, asks which position or grip it is, then asks where top goes and where bottom recovers. Identification results feed the same Leitner boxes as the flashcards.
+- Photos: every position and grip card can carry photos of real people. Seeds are hotlinked from Wikimedia Commons under open licenses. Each card's drawer has a curate panel to replace the photo with any image URL, a local file such as `img/half-guard.jpg`, or a YouTube link with `&t=` seconds, and to mark it verified. Edits are saved in the browser and can be exported from the Quiz tab as JSON to paste into `MEDIA_OVERRIDES`.
 - Call view: simulates a positional sparring call such as "Half Guard, bottom player starts with cross collar grip." Say both players' destinations out loud, then reveal the routes and what the grip changes. Random or hand-picked position, holder, and grip.
 - Filter chips: family and tier for positions, grip type and gi / no-gi for grips.
 - Keys: space reveals, 1 got it, 2 needs review, n new call, esc closes the drawer.
@@ -28,6 +30,14 @@ All content lives in the `NODES` array in `index.html`. Each node:
 Grips live in the `GRIPS` array. Each grip has `id` (prefixed `g-`), `name`, `aliases`, `type` (`collar`, `sleeve`, `clinch`, `clasp`, `legs`), `gi` (`gi`, `nogi`, `both`), `usedBy` (`top`, `bottom`, `both`), `positions` (node ids where it shows up), and the text fields `held`, `controls`, `setsUp`, `breaking`, `confuse`.
 
 Every `@id`, edge, and grip position must point at an existing node, and grip ids must not collide with node ids. The verification script used during development checks this in the browser console.
+
+## Photos and copyright
+
+Only openly licensed photos are committed to this repo. Stills from paid instructionals (Submeta, BJJ Fanatics) or YouTube are copyrighted, so they are not committed. For personal study you can screenshot them into an `img/` folder next to `index.html` and point the curate panel at the file. Keep that folder out of git if the repo is public. YouTube clips can be embedded by pasting the video URL with a timestamp; embedding is allowed, copying the frames is not.
+
+Every seeded Commons photo was located by file name only and starts as unverified. Open each card, look at the photo, and either mark it verified or replace it. The quiz can be restricted to verified photos.
+
+Positions with no open-license photo found: Butterfly Guard, Single Leg X, Inside Sankaku, 50/50, Knee on Belly. Most gi grips and the wrestling ties also have none.
 
 ## Design decisions
 

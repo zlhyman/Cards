@@ -66,6 +66,7 @@
       <button data-mode="roadmap" role="tab" class="mode-tab px-3 py-1 text-xs uppercase tracking-wider rounded">Roadmap</button>
       <button data-mode="grips" role="tab" class="mode-tab px-3 py-1 text-xs uppercase tracking-wider rounded">Grips</button>
       <button data-mode="cards" role="tab" class="mode-tab px-3 py-1 text-xs uppercase tracking-wider rounded">Flashcards</button>
+      <button data-mode="quiz" role="tab" class="mode-tab px-3 py-1 text-xs uppercase tracking-wider rounded">Quiz</button>
       <button data-mode="call" role="tab" class="mode-tab px-3 py-1 text-xs uppercase tracking-wider rounded">Call</button>
     </nav>
   </div>
@@ -127,6 +128,7 @@
             <button id="fc-open-node" class="shrink-0 text-[10px] uppercase tracking-widest text-slate-500 hover:text-slate-200 border border-slate-700 rounded px-2 py-1">detail ↗</button>
           </div>
 
+          <div id="fc-photo" class="mt-5"></div>
           <div id="fc-sections" class="mt-6 space-y-3"></div>
 
           <div class="mt-6 flex flex-wrap items-center gap-2">
@@ -161,6 +163,55 @@
         </div>
 
         <button id="reset-progress" class="w-full text-[10px] uppercase tracking-widest text-slate-500 hover:text-rose-300 border border-slate-800 hover:border-rose-500/50 rounded px-3 py-2">reset progress</button>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ============ QUIZ VIEW ============ -->
+  <section id="view-quiz" hidden>
+    <div class="grid lg:grid-cols-[1fr_280px] gap-6 items-start">
+      <div class="space-y-4">
+        <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
+          <div id="quiz-deck-chips" class="flex gap-1.5"></div>
+          <label class="flex items-center gap-2 text-[11px] text-slate-400 cursor-pointer"><input id="quiz-verified-only" type="checkbox" class="accent-slate-300"> verified photos only</label>
+          <span id="quiz-pool" class="text-[11px] text-slate-500"></span>
+        </div>
+
+        <article id="quiz-card" class="rounded-lg border border-slate-700 bg-slate-900/90 p-5 sm:p-7 accent-glow">
+          <div id="quiz-photo" class="mb-5"></div>
+          <div id="quiz-q" class="text-sm uppercase tracking-widest text-slate-300 mb-3"></div>
+          <div id="quiz-options" class="grid sm:grid-cols-2 gap-2"></div>
+          <div id="quiz-feedback" class="mt-4 text-[13px] text-slate-300 leading-relaxed" hidden></div>
+          <div class="mt-5 flex flex-wrap gap-2">
+            <button id="quiz-next" class="text-xs uppercase tracking-wider px-4 py-2 rounded bg-slate-100 text-slate-900 hover:bg-white" hidden>next <kbd class="border-slate-400 text-slate-700">space</kbd></button>
+            <button id="quiz-detail" class="text-[10px] uppercase tracking-widest text-slate-500 hover:text-slate-200 border border-slate-700 rounded px-2 py-1" hidden>detail ↗</button>
+          </div>
+        </article>
+
+        <div id="quiz-empty" class="rounded-lg border border-dashed border-slate-700 p-8 text-center text-sm text-slate-500" hidden>
+          no cards with photos match the current filters. add photos in the curate panel of any card.
+        </div>
+      </div>
+
+      <aside class="space-y-4">
+        <div class="rounded-lg border border-slate-800 bg-slate-900/70 p-4">
+          <h3 class="text-[10px] uppercase tracking-widest text-slate-500 mb-3">quiz session</h3>
+          <dl id="quiz-stats" class="grid grid-cols-3 gap-2 text-center"></dl>
+          <p class="text-[10px] text-slate-600 mt-3 leading-relaxed">step 1 identifies the photo. step 2 asks where top goes and where bottom recovers. the identification answer feeds the same leitner boxes as the flashcards.</p>
+        </div>
+        <div class="rounded-lg border border-slate-800 bg-slate-900/70 p-4">
+          <h3 class="text-[10px] uppercase tracking-widest text-slate-500 mb-2">photo coverage</h3>
+          <div id="quiz-coverage" class="text-[11px] text-slate-400 space-y-1"></div>
+        </div>
+        <div class="rounded-lg border border-slate-800 bg-slate-900/70 p-4 space-y-2">
+          <h3 class="text-[10px] uppercase tracking-widest text-slate-500 mb-1">your photo edits</h3>
+          <p class="text-[10px] text-slate-600 leading-relaxed">edits live in this browser. export them and paste the JSON into MEDIA_OVERRIDES in index.html to make them permanent.</p>
+          <div class="flex gap-2">
+            <button id="media-export" class="flex-1 text-[10px] uppercase tracking-widest text-slate-300 border border-slate-700 hover:border-slate-400 rounded px-2 py-1.5">export</button>
+            <button id="media-import" class="flex-1 text-[10px] uppercase tracking-widest text-slate-300 border border-slate-700 hover:border-slate-400 rounded px-2 py-1.5">import</button>
+          </div>
+          <textarea id="media-json" class="w-full h-24 text-[10px] bg-slate-950 border border-slate-800 rounded p-2 text-slate-300" placeholder="exported JSON appears here; paste JSON here to import"></textarea>
+        </div>
       </aside>
     </div>
   </section>
@@ -205,7 +256,7 @@
 <footer class="max-w-7xl mx-auto px-4 pb-8 text-[10px] text-slate-600 flex flex-wrap gap-x-4 gap-y-1">
   <span>tier = control vector (0 neutral → 5 ultimate).</span>
   <span>family = the four submeta position families + the turtle/standing hub.</span>
-  <span>keys: <kbd>space</kbd> reveal · <kbd>1</kbd> got it · <kbd>2</kbd> review · <kbd>n</kbd> new call · <kbd>esc</kbd> close</span>
+  <span>keys: <kbd>space</kbd> reveal · <kbd>1</kbd> got it · <kbd>2</kbd> review · <kbd>1</kbd>-<kbd>4</kbd> quiz answer · <kbd>n</kbd> new call · <kbd>esc</kbd> close</span>
 </footer>
 
 <script>
@@ -647,6 +698,131 @@ const GRIPS = [
 const GRIP_BY_ID = Object.fromEntries(GRIPS.map(g => [g.id, g]));
 
 // =====================================================================
+// DATA · MEDIA (photos of real people, openly licensed, hotlinked from Wikimedia Commons)
+// =====================================================================
+// Every seed below was located by file name only. None has been looked at by the author of this
+// file, so each starts verified:false. Open the card, look at the photo, and either mark it
+// verified or replace it in the curate panel. Overrides are saved in this browser and can be
+// exported from the Quiz tab and pasted into MEDIA_OVERRIDES to make them permanent.
+const commonsUrl = (file, w = 900) => `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(file)}?width=${w}`;
+const commonsPage = file => `https://commons.wikimedia.org/wiki/File:${encodeURIComponent(file.replace(/ /g, '_'))}`;
+const C = (file, note) => ({ src: commonsUrl(file), page: commonsPage(file), credit: 'Wikimedia Commons, see source page for author and license', note: note || '', verified: false });
+
+const MEDIA_SEED = {
+  'standing': [C('Body lock technique.jpg', 'wrestling bodylock in the standing clinch'), C('Okuri-ashi-barai.jpg', 'judo standing grips: sleeve and lapel')],
+  'closed-guard': [C('In-guard armbar.jpg', 'armbar attack from the guard'), C('Brazilian Jiu-jitsu Kimura lock from guard.jpg', 'kimura from guard, US Army demonstration')],
+  'half-guard': [C('BJJ-half guard.jpg', 'half guard'), C('Half guard in Brazilian Jiu-Jitsu.jpg', 'half guard')],
+  'ashi': [C('Leglock straight ankle lock.jpg', 'straight ankle lock from ashi garami')],
+  'side-control': [C('Mune-gatame.jpg', 'judo mune-gatame: chest hold, the side control pin'), C('Hon-kesa-gatame.jpg', 'judo kesa-gatame: scarf hold variant of side control')],
+  'north-south': [C('Kami-shiho-gatame.jpg', 'judo kami-shiho-gatame: north-south'), C('LUCAS LEPRI vs GREGOR GRACIE.jpg', 'competition north-south'), C('North–south choke.JPG', 'north-south choke')],
+  'mount': [C('Tate-shiho-gatame.jpg', 'judo tate-shiho-gatame: the mount')],
+  's-mount': [C('Roark armbar.jpg', 'armbar from mount, check whether the leg is in S-mount'), C('Armbar Technique - MCMAP.jpg', 'armbar from mount, Marine Corps demonstration')],
+  'back-control': [C('Back mount.jpg', 'back control with hooks'), C('Back mount - Submission grappling at 2010 Western Canadian Martial Arts Championships.jpg', 'competition back control'), C('Submission Grappling - rear naked choke.jpg', 'seatbelt into rear naked choke')],
+  'body-triangle': [C('Body triangle.png', 'body triangle from the back')],
+  'back-mount-belly': [C('ArmyMilCombativesRearmount.jpg', 'rear mount, check the bottom player is belly down'), C('US Army combatives-rear naked choke.jpg', 'rear naked choke from the back')],
+  'turtle': [C('120 365 Taking the Back (4565556770).jpg', 'taking the back from turtle')],
+  'g-collar': [C('Okuri-ashi-barai.jpg', 'judo lapel grip while standing')],
+  'g-sleeve': [C('Harai-tsurikomi-ashi.jpg', 'judo sleeve grip while standing')],
+  'g-collar-sleeve': [C('Uki-goshi.jpg', 'judo collar and sleeve grips')],
+  'g-kimura': [C('Brazilian Jiu-jitsu Kimura lock from guard.jpg', 'figure-four kimura grip from guard')],
+  'g-seatbelt': [C('Submission Grappling - rear naked choke.jpg', 'seatbelt from the back')],
+  'g-bodylock': [C('Body Lock (6455271627).jpg', 'standing bodylock'), C('Body lock technique.jpg', 'standing bodylock')],
+  'g-front-headlock': [C('Epic 12 MMA fight 120504-M-GC438-026.jpg', 'guillotine from the front headlock')],
+  'g-heel': [C('Leglock straight ankle lock.jpg', 'ankle lock grip on the heel')],
+  'g-crossface': [C('Mune-gatame.jpg', 'crossface arm in the side control pin, check')],
+};
+// Paste exported JSON from the Quiz tab here to make your edits permanent.
+const MEDIA_OVERRIDES = {};
+
+const MEDIA_KEY = 'bjj-state-machine.media.v1';
+const mediaLocal = loadJSON(MEDIA_KEY, {});
+function mediaFor(id) {
+  if (mediaLocal[id]) return mediaLocal[id];
+  if (MEDIA_OVERRIDES[id]) return MEDIA_OVERRIDES[id];
+  return MEDIA_SEED[id] || [];
+}
+function setMedia(id, list) {
+  if (list && list.length) mediaLocal[id] = list; else delete mediaLocal[id];
+  saveJSON(MEDIA_KEY, mediaLocal);
+}
+function ytEmbed(url) {
+  const m = url.match(/(?:youtu\.be\/|v=|\/embed\/|\/shorts\/)([\w-]{11})/);
+  if (!m) return null;
+  const t = url.match(/[?&#](?:t|start)=(\d+)/);
+  return `https://www.youtube-nocookie.com/embed/${m[1]}?start=${t ? t[1] : 0}&rel=0`;
+}
+const isVideo = m => !!ytEmbed(m.src || '');
+
+// idx is stored per element so prev/next works without global state
+function mediaPanel(id, opts = {}) {
+  const list = mediaFor(id);
+  const { quiz = false, compact = false, hideCaption = false } = opts;
+  if (!list.length) {
+    return compact ? '' : `<div class="rounded border border-dashed border-slate-700 p-4 text-[11px] text-slate-500">no photo yet. ${quiz ? '' : 'open curate below and paste an image URL, a local path like img/${id}.jpg, or a YouTube link with &t= seconds.'}</div>`;
+  }
+  const items = list.map((m, i) => {
+    const yt = ytEmbed(m.src || '');
+    const body = yt
+      ? `<div class="aspect-video w-full"><iframe class="w-full h-full rounded" src="${yt}" loading="lazy" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>`
+      : `<img src="${m.src}" alt="" loading="lazy" referrerpolicy="no-referrer" class="w-full ${compact ? 'aspect-video object-cover' : 'max-h-[420px] object-contain bg-slate-950'} rounded" onerror="this.parentElement.innerHTML='<div class=\\'aspect-video flex items-center justify-center text-[11px] text-slate-500 border border-dashed border-slate-700 rounded\\'>image failed to load</div>'">`;
+    return `<div data-slide="${i}" ${i ? 'hidden' : ''}>${body}</div>`;
+  }).join('');
+  const caption = (m, i) => hideCaption ? '' : `
+    <div class="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-[10px] text-slate-500">
+      <span class="${m.verified ? 'text-emerald-400' : 'text-amber-400'}">${m.verified ? 'verified' : 'unverified'}</span>
+      ${m.note ? `<span class="text-slate-400">${m.note}</span>` : ''}
+      ${m.page ? `<a href="${m.page}" target="_blank" rel="noopener" class="underline underline-offset-2 hover:text-slate-200">source</a>` : ''}
+      ${list.length > 1 ? `<span class="ml-auto flex gap-1"><button data-prev class="border border-slate-700 rounded px-1.5">‹</button><span>${i + 1}/${list.length}</span><button data-next class="border border-slate-700 rounded px-1.5">›</button></span>` : ''}
+    </div>`;
+  return `<div class="media-panel" data-media="${id}" data-idx="0">${items}${list.map((m, i) => `<div data-cap="${i}" ${i ? 'hidden' : ''}>${caption(m, i)}</div>`).join('')}</div>`;
+}
+function wireMedia(root) {
+  root.querySelectorAll('.media-panel').forEach(p => {
+    const n = p.querySelectorAll('[data-slide]').length;
+    const go = d => {
+      const i = (Number(p.dataset.idx) + d + n) % n;
+      p.dataset.idx = i;
+      p.querySelectorAll('[data-slide]').forEach(s => s.hidden = Number(s.dataset.slide) !== i);
+      p.querySelectorAll('[data-cap]').forEach(s => s.hidden = Number(s.dataset.cap) !== i);
+    };
+    p.querySelectorAll('[data-prev]').forEach(b => b.onclick = e => { e.stopPropagation(); go(-1); });
+    p.querySelectorAll('[data-next]').forEach(b => b.onclick = e => { e.stopPropagation(); go(1); });
+  });
+}
+function curatePanel(id) {
+  const list = mediaFor(id);
+  const cur = list[0] || {};
+  return `
+    <details class="mt-4 rounded border border-slate-800 bg-slate-900/60">
+      <summary class="cursor-pointer px-3 py-2 text-[10px] uppercase tracking-widest text-slate-500 hover:text-slate-300">curate photo</summary>
+      <div class="px-3 pb-3 space-y-2 text-[11px]">
+        <p class="text-slate-500 leading-relaxed">replaces the first photo for this card. image URL, a path relative to index.html such as img/${id}.jpg, or a YouTube URL with &t=seconds. leave URL empty and save to remove.</p>
+        <input id="cur-src" class="w-full bg-slate-950 border border-slate-800 rounded px-2 py-1 text-slate-200" placeholder="image or YouTube URL" value="${(cur.src || '').replace(/"/g, '&quot;')}">
+        <input id="cur-page" class="w-full bg-slate-950 border border-slate-800 rounded px-2 py-1 text-slate-200" placeholder="source page (for attribution)" value="${(cur.page || '').replace(/"/g, '&quot;')}">
+        <input id="cur-note" class="w-full bg-slate-950 border border-slate-800 rounded px-2 py-1 text-slate-200" placeholder="note shown under the photo" value="${(cur.note || '').replace(/"/g, '&quot;')}">
+        <label class="flex items-center gap-2 text-slate-300"><input id="cur-verified" type="checkbox" class="accent-slate-300" ${cur.verified ? 'checked' : ''}> I looked at this and it shows ${KINDS[kindOf(id)].byId[id].name}</label>
+        <div class="flex gap-2">
+          <button id="cur-save" class="text-[10px] uppercase tracking-widest px-3 py-1.5 rounded bg-slate-100 text-slate-900">save</button>
+          ${mediaLocal[id] ? '<button id="cur-reset" class="text-[10px] uppercase tracking-widest px-3 py-1.5 rounded border border-slate-700 text-slate-400">reset to seed</button>' : ''}
+          ${list.length > 1 ? `<span class="self-center text-slate-600">${list.length - 1} more seed photo(s) kept after the first</span>` : ''}
+        </div>
+      </div>
+    </details>`;
+}
+function wireCurate(root, id) {
+  const save = root.querySelector('#cur-save'); if (!save) return;
+  save.onclick = () => {
+    const src = root.querySelector('#cur-src').value.trim();
+    const rest = mediaFor(id).slice(1);
+    if (!src) { setMedia(id, rest); }
+    else setMedia(id, [{ src, page: root.querySelector('#cur-page').value.trim(), note: root.querySelector('#cur-note').value.trim(), verified: root.querySelector('#cur-verified').checked, credit: '' }, ...rest]);
+    openDrawer(id); rerender();
+  };
+  const reset = root.querySelector('#cur-reset');
+  if (reset) reset.onclick = () => { setMedia(id, null); openDrawer(id); rerender(); };
+}
+
+// =====================================================================
 // CARD KINDS
 // =====================================================================
 const POSITION_SECTIONS = [
@@ -740,8 +916,9 @@ function renderChips() {
   fillChips('grip-chips', Object.entries(GRIP_TYPES).map(([id, g]) => ({ label: g.label, on: state.gripTypes.has(id), cls: g.cls, set: state.gripTypes, value: id })));
   fillChips('gi-chips', [['gi', 'gi'], ['nogi', 'no-gi']].map(([v, l]) => ({ label: l, on: state.gi.has(v), set: state.gi, value: v })));
 
-  const showPos = state.mode !== 'grips' && !(state.mode === 'cards' && state.prefs.deck === 'grips');
-  const showGrip = state.mode !== 'roadmap' && !(state.mode === 'cards' && state.prefs.deck === 'positions');
+  const deckMode = state.mode === 'cards' || state.mode === 'quiz';
+  const showPos = state.mode !== 'grips' && !(deckMode && state.prefs.deck === 'grips');
+  const showGrip = state.mode !== 'roadmap' && !(deckMode && state.prefs.deck === 'positions');
   document.getElementById('filter-positions').hidden = !showPos;
   document.getElementById('filter-grips').hidden = !showGrip;
 
@@ -749,6 +926,7 @@ function renderChips() {
   document.getElementById('clear-filters').hidden = !any;
   const count = state.mode === 'grips' ? `${filteredGrips().length} / ${GRIPS.length} grips`
     : state.mode === 'cards' ? `${deckCards().length} cards`
+    : state.mode === 'quiz' ? `${deckCards().length} cards`
     : `${filteredNodes().length} / ${NODES.length} positions`;
   document.getElementById('filter-count').textContent = count;
 }
@@ -783,12 +961,18 @@ function groupSection(tag, label, desc, cards) {
   cards.forEach(c => grid.appendChild(c));
   return section;
 }
+function thumb(id) {
+  const m = mediaFor(id).find(x => !isVideo(x));
+  if (!m) return '<div class="aspect-video -mx-4 -mt-4 mb-3 bg-slate-950/60 border-b border-slate-800 flex items-center justify-center text-[10px] text-slate-600">no photo yet</div>';
+  return `<div class="aspect-video -mx-4 -mt-4 mb-3 bg-slate-950 border-b border-slate-800 overflow-hidden relative"><img src="${m.src.replace('width=900', 'width=480')}" alt="" loading="lazy" referrerpolicy="no-referrer" class="w-full h-full object-cover" onerror="this.remove()"><span class="absolute top-1.5 right-1.5 text-[9px] uppercase tracking-widest px-1 rounded bg-slate-950/80 ${m.verified ? 'text-emerald-400' : 'text-amber-400'}">${m.verified ? 'ok' : 'check'}</span></div>`;
+}
 const emptyMsg = t => `<div class="rounded-lg border border-dashed border-slate-700 p-8 text-center text-sm text-slate-500">${t}</div>`;
 
 function nodeCard(n) {
   const f = FAMILIES[n.family];
   const c = el('button', `${f.cls} accent-ring text-left rounded-lg border border-slate-700 bg-slate-900/80 p-4 transition w-full min-w-0 overflow-hidden`);
   c.innerHTML = `
+    ${thumb(n.id)}
     <div class="flex items-center gap-2 mb-2">
       <span class="w-1.5 h-1.5 rounded-full accent-bg"></span>
       <span class="text-[10px] uppercase tracking-widest accent-text">${f.label}</span>
@@ -822,6 +1006,7 @@ function gripCard(g) {
   const t = GRIP_TYPES[g.type];
   const c = el('button', `${t.cls} accent-ring text-left rounded-lg border border-slate-700 bg-slate-900/80 p-4 transition w-full min-w-0 overflow-hidden`);
   c.innerHTML = `
+    ${thumb(g.id)}
     <div class="flex items-center gap-2 mb-2">
       <span class="w-1.5 h-1.5 rounded-full accent-bg"></span>
       <span class="text-[10px] uppercase tracking-widest accent-text">${t.label}</span>
@@ -847,6 +1032,7 @@ function openDrawer(id) {
   c.querySelector('#drawer-close').onclick = closeDrawer;
   c.querySelector('#drawer-drill').onclick = () => { closeDrawer(); setMode('cards'); showCard(id); };
   c.querySelectorAll('[data-goto]').forEach(b => b.onclick = () => openDrawer(b.dataset.goto));
+  wireMedia(c); wireCurate(c, id);
   const d = document.getElementById('drawer');
   document.getElementById('drawer-backdrop').hidden = false;
   d.classList.remove('translate-x-full');
@@ -877,6 +1063,7 @@ function nodeDrawer(n) {
   const gripsHere = GRIPS.filter(g => g.positions.includes(n.id));
   return `
     ${drawerHeader(badge(f.label, true) + badge(`T${n.tier} · ${t.label}`), n.name)}
+    <div class="mb-4">${mediaPanel(n.id)}</div>
     <p class="text-sm text-slate-300 leading-relaxed mb-6">${n.summary}</p>
     ${routeBlock('If on top · advancing', n.topLabel, n.topRoute)}
     ${routeBlock('If on bottom · escaping / recovering', n.bottomLabel, n.bottomRoute)}
@@ -897,6 +1084,7 @@ function nodeDrawer(n) {
     <div class="mt-4">
       ${chipList('Reached from', NODES.filter(m => m.topNext.includes(n.id) || m.bottomNext.includes(n.id)).map(m => m.id))}
     </div>
+    ${curatePanel(n.id)}
     <button id="drawer-drill" class="mt-6 w-full text-xs uppercase tracking-wider px-3 py-2 rounded border border-slate-600 hover:border-slate-300 text-slate-200">drill this card →</button>`;
 }
 
@@ -904,6 +1092,7 @@ function gripDrawer(g) {
   const t = GRIP_TYPES[g.type];
   return `
     ${drawerHeader(badge(t.label, true) + badge(GI_LABEL[g.gi]) + badge(g.usedBy === 'both' ? 'top or bottom' : `${g.usedBy} holds it`), g.name)}
+    <div class="mb-4">${mediaPanel(g.id)}</div>
     ${g.aliases.length ? `<p class="text-[11px] text-slate-500 mb-4">also called: ${g.aliases.join(' · ')}</p>` : ''}
     <div class="space-y-4">
       ${GRIP_SECTIONS.filter(s => !s.chips).map(s => `
@@ -919,6 +1108,7 @@ function gripDrawer(g) {
     <div class="mt-6 pt-4 border-t border-slate-800">
       ${chipList('Positions where it shows up', g.positions)}
     </div>
+    ${curatePanel(g.id)}
     <button id="drawer-drill" class="mt-6 w-full text-xs uppercase tracking-wider px-3 py-2 rounded border border-slate-600 hover:border-slate-300 text-slate-200">drill this card →</button>`;
 }
 
@@ -972,6 +1162,7 @@ function showCard(id) {
   card.style.animation = 'none'; void card.offsetWidth; card.style.animation = '';
   document.getElementById('fc-badges').innerHTML = badge(k.badge(n), true) + badge(k.sub(n)) + `<span class="text-[10px] text-slate-600">${k.label} · box ${cardState(n.id).box}</span>`;
   document.getElementById('fc-name').textContent = n.name;
+  const ph = document.getElementById('fc-photo'); ph.innerHTML = mediaPanel(n.id, { compact: true }); wireMedia(ph);
   document.getElementById('fc-summary').textContent = n.summary || (n.aliases && n.aliases.length ? 'also called: ' + n.aliases.join(', ') : '');
   renderSections();
   renderDeckStatus();
@@ -1153,13 +1344,151 @@ function renderCall() {
   rev.querySelectorAll('[data-goto]').forEach(b => b.onclick = () => openDrawer(b.dataset.goto));
 }
 
+
+// =====================================================================
+// QUIZ · photo → identify → where next
+// =====================================================================
+const quiz = { cur: null, step: 0, answered: false, session: { asked: 0, right: 0, routeRight: 0, routeAsked: 0 }, verifiedOnly: false };
+const shuffle = a => a.map(x => [Math.random(), x]).sort((p, q) => p[0] - q[0]).map(p => p[1]);
+
+function quizPool() {
+  return deckCards().filter(c => mediaFor(c.id).some(m => !isVideo(m) && (!quiz.verifiedOnly || m.verified)));
+}
+function quizPhotoFor(id) {
+  const list = mediaFor(id).filter(m => !isVideo(m) && (!quiz.verifiedOnly || m.verified));
+  return list[Math.floor(Math.random() * list.length)];
+}
+function distractors(target, kind, n, exclude) {
+  const all = KINDS[kind].all.filter(x => x.id !== target.id && !exclude.includes(x.id));
+  // prefer same family / type for harder options
+  const same = all.filter(x => kind === 'position' ? x.family === target.family : x.type === target.type);
+  const rest = all.filter(x => !same.includes(x));
+  return [...shuffle(same), ...shuffle(rest)].slice(0, n);
+}
+
+function newQuiz() {
+  const pool = quizPool().filter(c => !quiz.cur || c.id !== quiz.cur.id);
+  const src = pool.length ? pool : quizPool();
+  if (!src.length) { quiz.cur = null; renderQuiz(); return; }
+  // weight toward lower boxes
+  const weighted = src.flatMap(c => Array(Math.max(1, 5 - cardState(c.id).box)).fill(c));
+  const c = weighted[Math.floor(Math.random() * weighted.length)];
+  const kind = kindOf(c.id);
+  const steps = [];
+  steps.push({ q: `which ${kind} is this?`, options: shuffle([c, ...distractors(c, kind, 3, [])]).map(o => ({ id: o.id, label: o.name, ok: o.id === c.id })), srs: true });
+  if (kind === 'position') {
+    const top = NODE_BY_ID[c.topNext[Math.floor(Math.random() * c.topNext.length)]];
+    steps.push({ q: `you are on top here (${c.topLabel.toLowerCase()}). where do you go next?`, options: shuffle([top, ...distractors(top, 'position', 3, c.topNext)]).map(o => ({ id: o.id, label: o.name, ok: c.topNext.includes(o.id) })), explain: `top: ${c.top}` });
+    const btm = NODE_BY_ID[c.bottomNext[Math.floor(Math.random() * c.bottomNext.length)]];
+    steps.push({ q: `you are on bottom here (${c.bottomLabel.toLowerCase()}). where do you recover to?`, options: shuffle([btm, ...distractors(btm, 'position', 3, c.bottomNext)]).map(o => ({ id: o.id, label: o.name, ok: c.bottomNext.includes(o.id) })), explain: `bottom: ${c.bottom}` });
+  } else {
+    const p = NODE_BY_ID[c.positions[Math.floor(Math.random() * c.positions.length)]];
+    steps.push({ q: 'where does this grip show up?', options: shuffle([p, ...distractors(p, 'position', 3, c.positions)]).map(o => ({ id: o.id, label: o.name, ok: c.positions.includes(o.id) })), explain: `sets up: ${c.setsUp}` });
+  }
+  quiz.cur = c; quiz.steps = steps; quiz.step = 0; quiz.answered = false; quiz.photo = quizPhotoFor(c.id);
+  renderQuiz();
+}
+
+function renderQuiz() {
+  const card = document.getElementById('quiz-card');
+  const empty = document.getElementById('quiz-empty');
+  document.getElementById('quiz-pool').textContent = `${quizPool().length} cards with photos in pool`;
+  renderQuizStats();
+  if (!quiz.cur) { card.hidden = true; empty.hidden = false; return; }
+  card.hidden = false; empty.hidden = true;
+  const c = quiz.cur, k = KINDS[kindOf(c.id)], st = quiz.steps[quiz.step];
+  card.className = `rounded-lg border border-slate-700 bg-slate-900/90 p-5 sm:p-7 accent-glow ${quiz.step === 0 && !quiz.answered ? '' : k.cls(c)}`;
+  const m = quiz.photo;
+  document.getElementById('quiz-photo').innerHTML = `
+    <img src="${m.src}" alt="" referrerpolicy="no-referrer" class="w-full max-h-[380px] object-contain bg-slate-950 rounded" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'aspect-video flex items-center justify-center text-[11px] text-slate-500 border border-dashed border-slate-700 rounded',textContent:'image failed to load'}))">
+    <div class="flex flex-wrap gap-x-3 mt-2 text-[10px] text-slate-500">
+      <span class="${m.verified ? 'text-emerald-400' : 'text-amber-400'}">${m.verified ? 'verified photo' : 'unverified photo'}</span>
+      ${quiz.step > 0 || quiz.answered ? `<span class="text-slate-300">${c.name}</span>${m.note ? `<span>${m.note}</span>` : ''}` : ''}
+      ${m.page ? `<a href="${m.page}" target="_blank" rel="noopener" class="underline underline-offset-2 hover:text-slate-200">source</a>` : ''}
+      <span class="ml-auto">step ${quiz.step + 1} / ${quiz.steps.length}</span>
+    </div>`;
+  document.getElementById('quiz-q').textContent = st.q;
+  const opts = document.getElementById('quiz-options');
+  opts.innerHTML = st.options.map((o, i) => {
+    let cls = 'border-slate-700 text-slate-200 hover:border-slate-400';
+    if (quiz.answered) cls = o.ok ? 'border-emerald-500 text-emerald-300 bg-emerald-500/10' : (o.id === quiz.picked ? 'border-rose-500 text-rose-300 bg-rose-500/10' : 'border-slate-800 text-slate-600');
+    return `<button data-opt="${o.id}" class="text-left text-[13px] px-3 py-2.5 rounded border ${cls} flex items-center gap-3" ${quiz.answered ? 'disabled' : ''}><kbd>${i + 1}</kbd><span>${o.label}</span></button>`;
+  }).join('');
+  opts.querySelectorAll('[data-opt]').forEach(b => b.onclick = () => answerQuiz(b.dataset.opt));
+  const fb = document.getElementById('quiz-feedback');
+  fb.hidden = !quiz.answered;
+  if (quiz.answered) {
+    const ok = st.options.find(o => o.id === quiz.picked)?.ok;
+    fb.innerHTML = `<span class="${ok ? 'text-emerald-400' : 'text-rose-400'}">${ok ? 'correct.' : 'no.'}</span> ${st.explain ? st.explain : (kindOf(c.id) === 'position' ? c.summary : c.controls)}`;
+  }
+  document.getElementById('quiz-next').hidden = !quiz.answered;
+  document.getElementById('quiz-next').innerHTML = (quiz.step < quiz.steps.length - 1 ? 'next step' : 'next photo') + ' <kbd class="border-slate-400 text-slate-700">space</kbd>';
+  document.getElementById('quiz-detail').hidden = !(quiz.step > 0 || quiz.answered);
+}
+
+function answerQuiz(id) {
+  if (!quiz.cur || quiz.answered) return;
+  const st = quiz.steps[quiz.step];
+  const ok = !!st.options.find(o => o.id === id)?.ok;
+  quiz.picked = id; quiz.answered = true;
+  if (st.srs) {
+    quiz.session.asked++; if (ok) quiz.session.right++;
+    const s = cardState(quiz.cur.id); s.seen++; state.srs.counter++;
+    if (ok) { s.correct++; s.box = Math.min(s.box + 1, INTERVALS.length - 1); s.due = state.srs.counter + INTERVALS[s.box]; }
+    else { s.box = 0; s.due = state.srs.counter + 2; }
+    saveJSON(SRS_KEY, state.srs);
+  } else { quiz.session.routeAsked++; if (ok) quiz.session.routeRight++; }
+  renderQuiz();
+}
+function quizAdvance() {
+  if (!quiz.cur) return newQuiz();
+  if (!quiz.answered) return;
+  if (quiz.step < quiz.steps.length - 1) { quiz.step++; quiz.answered = false; quiz.picked = null; renderQuiz(); }
+  else newQuiz();
+}
+function renderQuizStats() {
+  const q = quiz.session;
+  document.getElementById('quiz-stats').innerHTML = [
+    ['photos', q.asked], ['identified', q.asked ? Math.round(100 * q.right / q.asked) + '%' : '—'], ['routes', q.routeAsked ? Math.round(100 * q.routeRight / q.routeAsked) + '%' : '—'],
+  ].map(([k, v]) => `<div><dt class="text-[10px] uppercase tracking-widest text-slate-500">${k}</dt><dd class="text-lg text-slate-100">${v}</dd></div>`).join('');
+  const cov = (arr, label) => {
+    const withP = arr.filter(c => mediaFor(c.id).some(m => !isVideo(m)));
+    const ver = arr.filter(c => mediaFor(c.id).some(m => !isVideo(m) && m.verified));
+    return `<div class="flex justify-between"><span>${label}</span><span class="text-slate-200">${withP.length}/${arr.length} photos · ${ver.length} verified</span></div>`;
+  };
+  document.getElementById('quiz-coverage').innerHTML = cov(NODES, 'positions') + cov(GRIPS, 'grips') +
+    `<div class="text-[10px] text-slate-600 pt-1">missing: ${[...NODES, ...GRIPS].filter(c => !mediaFor(c.id).length).map(c => c.name.replace(/\s*\(.*\)$/, '')).join(', ') || 'none'}</div>`;
+}
+function renderQuizDeckChips() {
+  const root = document.getElementById('quiz-deck-chips');
+  root.innerHTML = '';
+  for (const [v, l] of [['positions', 'positions'], ['grips', 'grips'], ['both', 'both']]) {
+    root.appendChild(chip(l, state.prefs.deck === v, '', () => { state.prefs.deck = v; saveJSON(PREF_KEY, state.prefs); rerender(); newQuiz(); }));
+  }
+}
+document.getElementById('quiz-verified-only').onchange = e => { quiz.verifiedOnly = e.target.checked; newQuiz(); };
+document.getElementById('quiz-next').onclick = quizAdvance;
+document.getElementById('quiz-detail').onclick = () => quiz.cur && openDrawer(quiz.cur.id);
+document.getElementById('media-export').onclick = () => {
+  const ta = document.getElementById('media-json');
+  ta.value = JSON.stringify(mediaLocal, null, 2); ta.select();
+  try { navigator.clipboard?.writeText(ta.value).catch(() => {}); } catch {}
+};
+document.getElementById('media-import').onclick = () => {
+  try {
+    const obj = JSON.parse(document.getElementById('media-json').value);
+    for (const [id, list] of Object.entries(obj)) if (Array.isArray(list)) setMedia(id, list);
+    rerender(); renderQuiz();
+  } catch (e) { alert('could not parse JSON: ' + e.message); }
+};
+
 // =====================================================================
 // MODE + WIRING
 // =====================================================================
 function setMode(mode) {
   state.mode = mode;
   state.prefs.mode = mode; saveJSON(PREF_KEY, state.prefs);
-  for (const m of ['roadmap', 'grips', 'cards', 'call']) document.getElementById('view-' + m).hidden = mode !== m;
+  for (const m of ['roadmap', 'grips', 'cards', 'quiz', 'call']) document.getElementById('view-' + m).hidden = mode !== m;
   document.querySelectorAll('.mode-tab').forEach(b => {
     const on = b.dataset.mode === mode;
     b.className = `mode-tab px-3 py-1 text-xs uppercase tracking-wider rounded ${on ? 'bg-slate-100 text-slate-900' : 'text-slate-400 hover:text-slate-100'}`;
@@ -1171,6 +1500,7 @@ function setMode(mode) {
     if (!state.currentId || !deckCards().some(n => n.id === state.currentId)) showCard();
     else renderDeckStatus();
   }
+  if (mode === 'quiz') { renderQuizDeckChips(); if (!quiz.cur) newQuiz(); else renderQuiz(); }
   if (mode === 'call') { renderCallSelects(); if (!state.call) newCall(); }
 }
 
@@ -1184,6 +1514,7 @@ function rerender() {
     else renderDeckStatus();
   }
   if (state.mode === 'call') renderCallSelects();
+  if (state.mode === 'quiz') { renderQuizDeckChips(); renderQuiz(); }
 }
 
 function el(tag, cls, text) {
@@ -1218,6 +1549,9 @@ document.addEventListener('keydown', e => {
     if (e.key === ' ') { e.preventDefault(); revealAll(); }
     else if (e.key === '1') answer(true);
     else if (e.key === '2') answer(false);
+  } else if (state.mode === 'quiz') {
+    if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); quizAdvance(); }
+    else if ('1234'.includes(e.key) && quiz.cur && !quiz.answered) { const o = quiz.steps[quiz.step].options[Number(e.key) - 1]; if (o) answerQuiz(o.id); }
   } else if (state.mode === 'call') {
     if (e.key === ' ') { e.preventDefault(); document.getElementById('call-show').click(); }
     else if (e.key === 'n' || e.key === 'N') newCall();
