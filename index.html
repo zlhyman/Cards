@@ -698,38 +698,29 @@ const GRIPS = [
 const GRIP_BY_ID = Object.fromEntries(GRIPS.map(g => [g.id, g]));
 
 // =====================================================================
-// DATA · MEDIA (photos of real people, openly licensed, hotlinked from Wikimedia Commons)
+// DATA · MEDIA (photos of real people: own training footage in img/, plus openly licensed Wikimedia Commons photos)
 // =====================================================================
-// Every seed below was located by file name only. None has been looked at by the author of this
-// file, so each starts verified:false. Open the card, look at the photo, and either mark it
-// verified or replace it in the curate panel. Overrides are saved in this browser and can be
-// exported from the Quiz tab and pasted into MEDIA_OVERRIDES to make them permanent.
+// Own stills live in img/ (gitignored; the repo is public). Commons entries were each downloaded, looked at,
+// and either verified with credit from the Commons API or removed (2026-09-13). Anything still verified:false
+// has not been looked at. Open the card and use the curate panel to change a photo; overrides are saved in this
+// browser and can be exported from the Quiz tab and pasted into MEDIA_OVERRIDES to make them permanent.
 const commonsUrl = (file, w = 900) => `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(file)}?width=${w}`;
 const commonsPage = file => `https://commons.wikimedia.org/wiki/File:${encodeURIComponent(file.replace(/ /g, '_'))}`;
 const C = (file, note) => ({ src: commonsUrl(file), page: commonsPage(file), credit: 'Wikimedia Commons, see source page for author and license', note: note || '', verified: false });
+// Looked at and confirmed; credit is Artist + LicenseShortName from the Commons API.
+const V = (file, note, credit) => ({ ...C(file, note), credit, verified: true });
+// Own training footage, cropped from the Ladder pipeline's stills.
+const OWN = (id, note) => ({ src: `img/${id}.jpg`, page: '', credit: 'own training footage', note: note || '', verified: true });
 
 const MEDIA_SEED = {
-  'standing': [C('Body lock technique.jpg', 'wrestling bodylock in the standing clinch'), C('Okuri-ashi-barai.jpg', 'judo standing grips: sleeve and lapel')],
-  'closed-guard': [C('In-guard armbar.jpg', 'armbar attack from the guard'), C('Brazilian Jiu-jitsu Kimura lock from guard.jpg', 'kimura from guard, US Army demonstration')],
-  'half-guard': [C('BJJ-half guard.jpg', 'half guard'), C('Half guard in Brazilian Jiu-Jitsu.jpg', 'half guard')],
-  'ashi': [C('Leglock straight ankle lock.jpg', 'straight ankle lock from ashi garami')],
-  'side-control': [C('Mune-gatame.jpg', 'judo mune-gatame: chest hold, the side control pin'), C('Hon-kesa-gatame.jpg', 'judo kesa-gatame: scarf hold variant of side control')],
-  'north-south': [C('Kami-shiho-gatame.jpg', 'judo kami-shiho-gatame: north-south'), C('LUCAS LEPRI vs GREGOR GRACIE.jpg', 'competition north-south'), C('North–south choke.JPG', 'north-south choke')],
-  'mount': [C('Tate-shiho-gatame.jpg', 'judo tate-shiho-gatame: the mount')],
-  's-mount': [C('Roark armbar.jpg', 'armbar from mount, check whether the leg is in S-mount'), C('Armbar Technique - MCMAP.jpg', 'armbar from mount, Marine Corps demonstration')],
-  'back-control': [C('Back mount.jpg', 'back control with hooks'), C('Back mount - Submission grappling at 2010 Western Canadian Martial Arts Championships.jpg', 'competition back control'), C('Submission Grappling - rear naked choke.jpg', 'seatbelt into rear naked choke')],
-  'body-triangle': [C('Body triangle.png', 'body triangle from the back')],
-  'back-mount-belly': [C('ArmyMilCombativesRearmount.jpg', 'rear mount, check the bottom player is belly down'), C('US Army combatives-rear naked choke.jpg', 'rear naked choke from the back')],
-  'turtle': [C('120 365 Taking the Back (4565556770).jpg', 'taking the back from turtle')],
-  'g-collar': [C('Okuri-ashi-barai.jpg', 'judo lapel grip while standing')],
-  'g-sleeve': [C('Harai-tsurikomi-ashi.jpg', 'judo sleeve grip while standing')],
-  'g-collar-sleeve': [C('Uki-goshi.jpg', 'judo collar and sleeve grips')],
-  'g-kimura': [C('Brazilian Jiu-jitsu Kimura lock from guard.jpg', 'figure-four kimura grip from guard')],
-  'g-seatbelt': [C('Submission Grappling - rear naked choke.jpg', 'seatbelt from the back')],
-  'g-bodylock': [C('Body Lock (6455271627).jpg', 'standing bodylock'), C('Body lock technique.jpg', 'standing bodylock')],
-  'g-front-headlock': [C('Epic 12 MMA fight 120504-M-GC438-026.jpg', 'guillotine from the front headlock')],
-  'g-heel': [C('Leglock straight ankle lock.jpg', 'ankle lock grip on the heel')],
-  'g-crossface': [C('Mune-gatame.jpg', 'crossface arm in the side control pin, check')],
+  'closed-guard': [V('Brazilian Jiu-jitsu Kimura lock from guard.jpg', 'kimura from guard, US Army demonstration', 'PFC Linsey Williams, public domain, via Wikimedia Commons')],
+  'half-guard': [V('BJJ-half guard.jpg', 'half guard, bottom player has one leg wrapped', 'parhessiastes, CC BY-SA 2.0, via Wikimedia Commons')],
+  'ashi': [V('Leglock straight ankle lock.jpg', 'straight ankle lock from ashi garami, low-resolution field-manual photo', 'US Army field manual, public domain, via Wikimedia Commons')],
+  'north-south': [V('North–south choke.JPG', 'north-south choke, chest on face', 'Jdcollins13, CC BY-SA 3.0, via Wikimedia Commons')],
+  'back-control': [V('Back mount.jpg', 'back control with hooks in, gi', 'public domain, via Wikimedia Commons'), V('Submission Grappling - rear naked choke.jpg', 'rear naked choke from back control', 'MartialArtsNomad.com, CC BY 2.0, via Wikimedia Commons')],
+  'turtle': [V('Back mount - Submission grappling at 2010 Western Canadian Martial Arts Championships.jpg', 'turtle with the top player riding the back', 'MartialArtsNomad.com, CC BY 2.0, via Wikimedia Commons')],
+  'g-kimura': [OWN('g-kimura', 'figure-four kimura grip from the top, annotated demo frame'), V('Brazilian Jiu-jitsu Kimura lock from guard.jpg', 'figure-four kimura grip from guard', 'PFC Linsey Williams, public domain, via Wikimedia Commons')],
+  'g-bodylock': [V('Body Lock (6455271627).jpg', 'rear bodylock in wrestling, opponent on all fours', 'Chris Hunkeler, CC BY-SA 2.0, via Wikimedia Commons')],
 };
 // Paste exported JSON from the Quiz tab here to make your edits permanent.
 const MEDIA_OVERRIDES = {};
