@@ -727,10 +727,25 @@ const MEDIA_OVERRIDES = {};
 
 const MEDIA_KEY = 'bjj-state-machine.media.v1';
 const mediaLocal = loadJSON(MEDIA_KEY, {});
+// Local files under img/ are gitignored, so a hosted copy of this page will not have them.
+// Every relative src is probed once at startup; the ones that fail are hidden everywhere.
+const deadMedia = new Set();
 function mediaFor(id) {
-  if (mediaLocal[id]) return mediaLocal[id];
-  if (MEDIA_OVERRIDES[id]) return MEDIA_OVERRIDES[id];
-  return MEDIA_SEED[id] || [];
+  const list = mediaLocal[id] || MEDIA_OVERRIDES[id] || MEDIA_SEED[id] || [];
+  return list.filter(m => !deadMedia.has(m.src));
+}
+function probeLocalMedia() {
+  const all = [...Object.values(MEDIA_SEED), ...Object.values(MEDIA_OVERRIDES), ...Object.values(mediaLocal)].flat();
+  const rel = [...new Set(all.map(m => m.src).filter(src => src && !/^(https?:)?\/\//i.test(src) && !/^data:/i.test(src)))];
+  let pending = rel.length;
+  if (!pending) return;
+  const done = () => { if (--pending === 0 && deadMedia.size) { rerender(); if (state.mode === 'quiz') newQuiz(); } };
+  for (const src of rel) {
+    const img = new Image();
+    img.onload = done;
+    img.onerror = () => { deadMedia.add(src); done(); };
+    img.src = src;
+  }
 }
 function setMedia(id, list) {
   if (list && list.length) mediaLocal[id] = list; else delete mediaLocal[id];
@@ -1627,6 +1642,7 @@ renderRoadmap();
 renderGrips();
 renderHideToggles();
 setMode(state.mode);
+probeLocalMedia();
 </script>
 </body>
 </html>
