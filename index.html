@@ -694,6 +694,33 @@ const GRIPS = [
     breaking: 'Straight-line pulls break a thumbless grip. Circle away from the fingers.',
     confuse: 'These are hand shapes. They go on the same targets as pants and sleeve grips in the gi.',
   },
+  {
+    id: 'g-crazy-dog', name: 'Crazy Dog Pass (Cross Pant Grip)', aliases: ['Arm weave pass', 'Cross pant grip pass', 'Lazy Dog (variation)'], type: 'legs', gi: 'gi', usedBy: 'top',
+    positions: ['half-guard', 'knee-on-belly', 'north-south'],
+    held: 'From the top, usually against a knee shield. Reach ACROSS and grip the far trouser leg, a cross pant grip rather than a same-side one. That single arm staples both of their legs together. Your head drops onto the middle of their body and presses. Your other hand is now free for the collar or sleeve to kill their posture.',
+    controls: 'Both legs with one arm. That is the whole point of it: one arm does the job of two, so the free arm neutralises their frames and posture while the legs stay dead.',
+    setsUp: 'Knee on Belly, North-South, and the leg weave when they fight with the top leg. If they turtle, take the back. From North-South the kimura is there.',
+    breaking: 'Do not let the cross grip settle. Get your knee line back between you, frame on the gripping arm, and turn in rather than flattening out. Once their head is on your middle and both legs are stapled it is very late.',
+    confuse: 'Sometimes called the arm weave pass. In no-gi it is much weaker, because the cross pant grip is what makes it work.',
+  },
+  {
+    id: 'g-over-under', name: 'Over-Under Pass Grip', aliases: ['Over-under pass'], type: 'legs', gi: 'both', usedBy: 'top',
+    positions: ['half-guard', 'side-control'],
+    held: 'One arm goes UNDER their far leg and grips the trouser leg. The other arm goes OVER their near leg and grips the belt. Then chest into the stacked legs and walk forward. In no-gi the same shape works with the hands on the hip and the far leg.',
+    controls: 'The hips. With one leg lifted and one pinned, they cannot re-guard or turn in. It is a slow, heavy pass that wins by taking space away rather than by speed.',
+    setsUp: 'Side Control, and North-South if they turn away from the pressure.',
+    breaking: 'Fight it early: get a frame on the shoulder before the chest lands, and work your under-side knee back in. Once the belt grip is on and their chest is heavy the escape is a long way back.',
+    confuse: 'Bernardo Faria’s signature pass. Hard to photograph, because the grips are buried between two stacked bodies.',
+  },
+  {
+    id: 'g-double-unders', name: 'Double Unders (Stack Pass Grip)', aliases: ['Double underhooks on the legs', 'Double unders pass'], type: 'legs', gi: 'both', usedBy: 'top',
+    positions: ['butterfly', 'half-guard', 'side-control'],
+    held: 'From the top, both arms scoop UNDER both of their legs, hands clasped or gripping the belt behind them. Their hips come off the mat and get stacked toward their own shoulders.',
+    controls: 'Both legs and the hips at once. The moment their hips leave the mat they have nothing to re-guard with.',
+    setsUp: 'Stack pass straight to Side Control, or switch to the over-under if they defend one side.',
+    breaking: 'This is the one to remember. Make yourself as FLAT against the ground as you can, so they cannot lift your hips. In the gi, grip BOTH of their sleeves: that stops the lift and stops them clasping their hands. From flat, work a frame into the hip and recover your knee line.',
+    confuse: 'Double unders here means both arms under your LEGS, not underhooks on your arms in a clinch.',
+  },
 ];
 const GRIP_BY_ID = Object.fromEntries(GRIPS.map(g => [g.id, g]));
 
