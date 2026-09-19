@@ -731,6 +731,12 @@ const GRIP_BY_ID = Object.fromEntries(GRIPS.map(g => [g.id, g]));
 // and either verified with credit from the Commons API or removed (2026-09-13). Anything still verified:false
 // has not been looked at. Open the card and use the curate panel to change a photo; overrides are saved in this
 // browser and can be exported from the Quiz tab and pasted into MEDIA_OVERRIDES to make them permanent.
+// 2026-09-20 pass: every source under ~/Ladder-build was re-read (21 contact sheets: nine own class clips, three
+// butterfly clips, seven Nomadic Grappling captures, the Submeta side-control clip). The own footage is all no-gi,
+// so none of the gi grips can come from it, and no frame shows s-mount, a locked body triangle, belly-down back
+// mount, an overhook, a monkey grip, or the three passing grips unambiguously. Still empty: s-mount, body-triangle,
+// back-mount-belly, g-collar, g-cross-collar, g-cross-grip, g-lapel, g-pants, g-belt, g-overhook, g-monkey,
+// g-crazy-dog, g-over-under, g-double-unders. The five Commons credits below were re-checked against the API.
 const commonsUrl = (file, w = 900) => `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(file)}?width=${w}`;
 const commonsPage = file => `https://commons.wikimedia.org/wiki/File:${encodeURIComponent(file.replace(/ /g, '_'))}`;
 const C = (file, note) => ({ src: commonsUrl(file), page: commonsPage(file), credit: 'Wikimedia Commons, see source page for author and license', note: note || '', verified: false });
