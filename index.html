@@ -394,11 +394,12 @@ const NODES = [
     id: 'north-south', name: 'North-South', family: 'pins', tier: 3,
     topLabel: 'Top (pinning)', bottomLabel: 'Bottom (escaping)',
     summary: 'Top player above the head, chest over the face, hips controlling the arms. Reached by rotating around Side Control when they push. Excellent for arm attacks and the north-south choke.',
-    top: 'Sink your hips into their armpits, control both arms. Attack the kimura, the north-south choke, or rotate back to Side Control and Mount as they bridge.',
+    top: 'The choke is the point of this position. One arm round the neck, second hand under the first to lock it, then drop your pec onto their shoulder: pressure goes straight down, flat, not lifting either side. It should finish at 60 percent; if you need 100 the arm is in the wrong place, so hold longer rather than squeeze harder. If the neck is not there, sink your hips into their armpits, control both arms, go for the kimura, or rotate back to Side Control and Mount as they bridge.',
     bottom: 'Forearms into the hip creases, elbows tight. Tuck and turn: circle your knees toward your elbows and come up into Turtle, or drop a knee in to recover Half Guard. Never push up with straight arms.',
     dangers: 'Bottom: north-south choke, kimura, darce, armbar the moment you push. Top: losing them to Turtle if your hips float.',
     wedge: 'Bottom: forearms wedged into the hip creases, elbows glued to the ribs. Top: hips over the head, arms locked into the armpits.',
-    topRoute: ['Sink hips', 'Control both arms', 'Kimura / N-S choke', 'or: rotate', '@side-control', '@mount'],
+    topRoute: ['Arm round the neck, hand under hand', 'Pec drops onto the shoulder', 'N-S choke', 'or: sink hips, control arms', 'Kimura', 'or: rotate', '@side-control', '@mount'],
+    watch: [{ side: 'top', url: 'https://www.youtube.com/watch?v=QlXPPtc6iGw', title: 'My favorite BJJ move: The north south choke! #jiujitsu', channel: 'Matt Arroyo Jiu Jitsu', note: 'north-south choke finish, no-gi: arm round the neck, second hand under the first, pec drops onto the shoulder, straight down and flat' }],
     bottomRoute: ['Forearms in the hips', 'Tuck and turn', '@turtle', 'or: knee in', '@half-guard'],
     topNext: ['side-control', 'mount', 'back-control'], bottomNext: ['turtle', 'half-guard'],
   },
@@ -909,8 +910,15 @@ const ROUTE_VIDEOS = {
 const routeVideo = (from, role, to) => ROUTE_VIDEOS[`${from}|${role}|${to}`] || null;
 const routeVideoCount = () => NODES.reduce((n, c) => n + c.topNext.filter(t => routeVideo(c.id, 'top', t)).length + c.bottomNext.filter(t => routeVideo(c.id, 'bottom', t)).length, 0);
 const routeEdgeCount = () => NODES.reduce((n, c) => n + c.topNext.length + c.bottomNext.length, 0);
+// Optional per-node `watch` entries ({ side, url, title, channel, note }) for things that are not a transition,
+// such as the finish from that position. Shown next to the route of that side and under the quiz answer.
+const nodeWatch = (id, side) => ((NODE_BY_ID[id] && NODE_BY_ID[id].watch) || []).filter(w => w.side === side);
+const watchLink = (w, label) => `<a href="${w.url}" ${embedAttrs(w.url)} target="_blank" rel="noopener" class="text-slate-400 hover:text-slate-100 underline underline-offset-2 decoration-slate-700" title="${w.title.replace(/"/g, '&quot;')} · ${w.channel.replace(/"/g, '&quot;')}">&#9654; watch: ${label} <span class="text-slate-600">· ${w.channel}</span></a>`;
+// data- attributes that let a watch link expand into an embedded player (see the click handler near the keyboard
+// shortcuts). Embedding is allowed by YouTube's terms; copying frames is not, so this is how transitions are "seen".
+const embedAttrs = url => { const id = (url.match(/[?&]v=([\w-]{11})/) || [])[1]; const t = (url.match(/[?&]t=(\d+)/) || [])[1] || 0; return id ? `data-embed="${id}" data-start="${t}"` : ''; };
 // Small play link for a chip; empty string when there is no video for that edge.
-const videoMark = (from, role, to) => { const v = routeVideo(from, role, to); return v ? `<a href="${v.url}" target="_blank" rel="noopener" title="${v.note.replace(/"/g, '&quot;')} · ${v.channel.replace(/"/g, '&quot;')}" class="text-[11px] text-slate-500 hover:text-slate-100 px-1 -ml-1" aria-label="watch: ${v.note.replace(/"/g, '&quot;')}">&#9654;</a>` : ''; };
+const videoMark = (from, role, to) => { const v = routeVideo(from, role, to); return v ? `<a href="${v.url}" ${embedAttrs(v.url)} target="_blank" rel="noopener" title="${v.note.replace(/"/g, '&quot;')} · ${v.channel.replace(/"/g, '&quot;')}" class="text-[11px] text-slate-500 hover:text-slate-100 px-1 -ml-1" aria-label="watch: ${v.note.replace(/"/g, '&quot;')}">&#9654;</a>` : ''; };
 
 const MEDIA_KEY = 'bjj-state-machine.media.v1';
 const mediaLocal = loadJSON(MEDIA_KEY, {});
@@ -1379,17 +1387,18 @@ function routeBlock(title, role, steps, fromId, side) {
   return `
     <div class="mb-4">
       <h4 class="text-[10px] uppercase tracking-widest text-slate-500 mb-2">${title} <span class="text-slate-600">· ${role}</span></h4>
-      <div class="flex flex-wrap items-center gap-1.5">${steps.map((s, i) =>
+      <div class="flex flex-wrap items-center gap-1.5" data-embed-host>${steps.map((s, i) =>
         (i ? '<span class="text-slate-600 text-[11px]">→</span>' : '') +
         (s.startsWith('@') ? idChip(s.slice(1)) + (fromId ? videoMark(fromId, side, s.slice(1)) : '') : `<span class="text-[11px] text-slate-300 bg-slate-800/80 rounded px-2 py-0.5">${s}</span>`)
       ).join('')}</div>
+      ${fromId && nodeWatch(fromId, side).length ? `<div class="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px]" data-embed-host>${nodeWatch(fromId, side).map(w => watchLink(w, w.note.split(':')[0])).join('')}</div>` : ''}
     </div>`;
 }
 // Chip list for a node's next positions, each followed by a play mark when a route video exists.
 function nextChipList(title, fromId, side, ids) {
   return `<div>
     <h4 class="text-[10px] uppercase tracking-widest text-slate-500 mb-2">${title}</h4>
-    <div class="flex flex-wrap items-center gap-1.5">${ids.map(id => idChip(id) + videoMark(fromId, side, id)).join('') || '<span class="text-[11px] text-slate-600">—</span>'}</div>
+    <div class="flex flex-wrap items-center gap-1.5" data-embed-host>${ids.map(id => idChip(id) + videoMark(fromId, side, id)).join('') || '<span class="text-[11px] text-slate-600">—</span>'}</div>
   </div>`;
 }
 function idChip(id) {
@@ -1703,9 +1712,10 @@ function renderQuiz() {
 function quizWatchLinks(c, st) {
   if (!st.side) return '';
   const vids = st.options.filter(o => o.ok).map(o => ({ o, v: routeVideo(c.id, st.side, o.id) })).filter(x => x.v);
-  if (!vids.length) return '';
-  return `<div class="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[11px]">${vids.map(({ o, v }) =>
-    `<a href="${v.url}" target="_blank" rel="noopener" class="text-slate-400 hover:text-slate-100 underline underline-offset-2 decoration-slate-700" title="${v.title.replace(/"/g, '&quot;')} · ${v.channel.replace(/"/g, '&quot;')}">&#9654; watch: ${c.name.replace(/\s*\(.*\)$/, '')} → ${o.label.replace(/\s*\(.*\)$/, '')} <span class="text-slate-600">· ${v.channel}</span></a>`).join('')}</div>`;
+  const extra = nodeWatch(c.id, st.side);
+  if (!vids.length && !extra.length) return '';
+  return `<div class="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[11px]" data-embed-host>${extra.map(w => watchLink(w, w.note.split(':')[0])).join('')}${vids.map(({ o, v }) =>
+    `<a href="${v.url}" ${embedAttrs(v.url)} target="_blank" rel="noopener" class="text-slate-400 hover:text-slate-100 underline underline-offset-2 decoration-slate-700" title="${v.title.replace(/"/g, '&quot;')} · ${v.channel.replace(/"/g, '&quot;')}">&#9654; watch: ${c.name.replace(/\s*\(.*\)$/, '')} → ${o.label.replace(/\s*\(.*\)$/, '')} <span class="text-slate-600">· ${v.channel}</span></a>`).join('')}</div>`;
 }
 function answerQuiz(id) {
   if (!quiz.cur || quiz.answered) return;
@@ -1823,6 +1833,20 @@ document.getElementById('reset-progress').onclick = () => {
   showCard();
 };
 
+// A watch link opens an embedded player under its row instead of leaving the app; click again to close it.
+// Long-press / middle-click still opens YouTube via the href.
+document.addEventListener('click', e => {
+  const a = e.target.closest('a[data-embed]');
+  if (!a || e.metaKey || e.ctrlKey || e.button) return;
+  e.preventDefault();
+  const host = a.closest('[data-embed-host]') || a.parentElement;
+  const open = host.querySelector(':scope > .yt-embed');
+  if (open) { const same = open.dataset.id === a.dataset.embed; open.remove(); if (same) return; }
+  const box = document.createElement('div');
+  box.className = 'yt-embed w-full mt-2 aspect-video'; box.dataset.id = a.dataset.embed;
+  box.innerHTML = `<iframe class="w-full h-full rounded border border-slate-700 bg-black" src="https://www.youtube-nocookie.com/embed/${a.dataset.embed}?start=${a.dataset.start || 0}&rel=0" title="${a.title || 'video'}" allow="accelerometer; autoplay; encrypted-media; picture-in-picture" allowfullscreen loading="lazy"></iframe>`;
+  host.appendChild(box);
+});
 document.addEventListener('keydown', e => {
   if (e.target.matches('input, textarea, select')) return;
   if (e.key === 'Escape') return closeDrawer();

@@ -27,6 +27,7 @@ All content lives in the `NODES` array in `index.html`. Each node:
 | `top`, `bottom`, `dangers`, `wedge` | the four reveal sections |
 | `topRoute`, `bottomRoute` | ordered steps; a step starting with `@` is a node id and renders as a clickable chip |
 | `topNext`, `bottomNext` | graph edges used for the roadmap card summary and the drawer's "reached from" list |
+| `watch` (optional) | `[{ side: 'top' or 'bottom', url, title, channel, note }]`: a free video for something that is not a transition, such as the finish from that position; shown under that side's route and under the quiz answer |
 
 Grips live in the `GRIPS` array. Each grip has `id` (prefixed `g-`), `name`, `aliases`, `type` (`collar`, `sleeve`, `clinch`, `clasp`, `legs`), `gi` (`gi`, `nogi`, `both`), `usedBy` (`top`, `bottom`, `both`), `positions` (node ids where it shows up), and the text fields `held`, `controls`, `setsUp`, `breaking`, `confuse`.
 
