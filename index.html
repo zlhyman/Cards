@@ -736,7 +736,7 @@ const GRIP_BY_ID = Object.fromEntries(GRIPS.map(g => [g.id, g]));
 // so none of the gi grips can come from it, and no frame shows s-mount, a locked body triangle, belly-down back
 // mount, an overhook, a monkey grip, or the three passing grips unambiguously. Still empty: s-mount, body-triangle,
 // back-mount-belly, g-collar, g-cross-collar, g-cross-grip, g-lapel, g-pants, g-belt, g-overhook, g-monkey,
-// g-crazy-dog, g-over-under, g-double-unders. The five Commons credits below were re-checked against the API.
+// g-crazy-dog, g-over-under, g-double-unders. The Commons credits below were re-checked against the API.
 const commonsUrl = (file, w = 900) => `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(file)}?width=${w}`;
 const commonsPage = file => `https://commons.wikimedia.org/wiki/File:${encodeURIComponent(file.replace(/ /g, '_'))}`;
 const C = (file, note) => ({ src: commonsUrl(file), page: commonsPage(file), credit: 'Wikimedia Commons, see source page for author and license', note: note || '', verified: false });
@@ -769,7 +769,9 @@ const MEDIA_SEED = {
   'fifty-fifty': [{ src: 'img/fifty-fifty.gif', page: 'https://www.youtube.com/watch?v=EkUiYeqF0do&t=244s', credit: 'JoshRichBJJ, Every Jiu Jitsu Guard Explained in 8 Minutes (YouTube), personal use only', note: '50/50, looping: both seated, each with one leg between the other\u2019s, mirrored', verified: true }, { src: 'img/fifty-fifty.jpg', page: 'https://www.youtube.com/watch?v=EkUiYeqF0do&t=244s', credit: 'JoshRichBJJ, Every Jiu Jitsu Guard Explained in 8 Minutes (YouTube), personal use only', note: '50/50 held still, both gripping the other\u2019s foot', verified: true }],
   'side-control': [OWN('side-control', 'side control, chest on chest, near arm under the head')],
   'turtle': [NOMAD('turtle', 'turtle: bottom player on hands and knees, top player riding the back')],
-  'back-control': [OWN('back-control', 'back control, chest to back, legs wrapped round the waist, arm across the neck'), V('Submission Grappling - rear naked choke.jpg', 'rear naked choke being finished from back control. the hands are the RNC lock (forearm under the chin, other hand behind the head), not the seatbelt; the position is still back control, the choke is the submission from it', 'MartialArtsNomad.com, CC BY 2.0, via Wikimedia Commons')],
+  // Dropped 2026-09-21: the Commons RNC photo (Submission Grappling - rear naked choke.jpg) showed the choke
+  // lock, not a seatbelt, and the quiz was serving it as the identifying photo for "Seatbelt + Hooks".
+  'back-control': [OWN('back-control', 'back control, chest to back, legs wrapped round the waist, arm across the neck')],
   'g-kimura': [OWN('g-kimura', 'figure-four kimura grip from the top, annotated demo frame'), V('Brazilian Jiu-jitsu Kimura lock from guard.jpg', 'figure-four kimura grip from guard', 'PFC Linsey Williams, public domain, via Wikimedia Commons')],
   'g-crossface': [OWN('g-crossface', 'crossface from side control, near arm across the jaw turning the face away')],
   'g-seatbelt': [OWN('g-seatbelt', 'seatbelt from the back: one arm over the near shoulder, one under the far armpit, hands joined at the chest')],
