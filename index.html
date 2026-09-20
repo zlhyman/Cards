@@ -787,6 +787,129 @@ const MEDIA_SEED = {
 // Paste exported JSON from the Quiz tab here to make your edits permanent.
 const MEDIA_OVERRIDES = {};
 
+// =====================================================================
+// DATA · ROUTE VIDEOS (one free YouTube video per transition)
+// =====================================================================
+// Keyed '<from>|<role>|<to>' where role is 'top' (the top player advancing to `to`) or 'bottom' (the bottom
+// player recovering to `to`), matching each node's topNext / bottomNext. Every id was checked against
+// YouTube's oEmbed endpoint when added; title and channel are what it returned. Nothing is copied: the app
+// only links out, so these are safe in a public repo. Shown as a "watch" link in the quiz route steps and as
+// a play mark next to the chips in each position's drawer.
+const ROUTE_VIDEOS = {
+  // standing
+  'standing|top|turtle': { url: 'https://www.youtube.com/watch?v=gyf7Oh9lCiI', title: 'Inside Tie Side to Side Snap Downs by John Danaher', channel: 'BJJ Fanatics', note: 'inside-tie snap down to a front headlock, opponent lands in turtle' },
+  'standing|top|side-control': { url: 'https://www.youtube.com/watch?v=Zdac3bXYo2U', title: 'How to Setup and Finish the Double Leg Takedown in Jiu Jitsu with Rory Macdonald', channel: 'Bernardo Faria BJJ Fanatics', note: 'double leg takedown setup and finish, landing past the guard in side control' },
+  'standing|top|half-guard': { url: 'https://www.youtube.com/watch?v=64z25NDWlQo', title: 'Single Leg Takedown For BJJ W/ Gi (Don\'t Double Butt Scoot)', channel: 'Chewjitsu', note: 'wrestling single leg takedown with grip fighting, finishing on top (typically in half guard)' },
+  'standing|bottom|butterfly': { url: 'https://www.youtube.com/watch?v=H2udU0rEE4o', title: 'A Simple and Easy Way to Pull Guard in BJJ', channel: 'Stephan Kesting', note: 'safe guard pull that sits to a seated/butterfly guard instead of falling flat' },
+  'standing|bottom|slx': { url: 'https://www.youtube.com/watch?v=8nd2Q9m9Tes', title: 'How to Pull to Single Leg X | Bruno Frazatto', channel: 'TELARI ', note: 'guard pull from standing straight into single leg X' },
+  'standing|bottom|closed-guard': { url: 'https://www.youtube.com/watch?v=QAuQPbU9zqQ', title: 'HOW TO PULL GUARD IN BJJ PROPERLY! (Closed Guard)', channel: 'Nathan Mendelsohn BJJ', note: 'pulling closed guard from standing with grips first' },
+  // closed-guard
+  'closed-guard|top|half-guard': { url: 'https://www.youtube.com/watch?v=0YZMbPUOLDc', title: 'Jiu-Jitsu Fundamentals | Closed Guard Break to Knee Slice Pass', channel: 'Danny Fung', note: 'closed guard break then knee slice pass through half guard' },
+  'closed-guard|top|side-control': { url: 'https://www.youtube.com/watch?v=nAEWx5bsv0g', title: 'Closed Guard Passing Guide | BJJ Fundamentals', channel: 'Jordan Teaches Jiujitsu', note: 'posture, break the closed guard and pass to side control' },
+  'closed-guard|bottom|mount': { url: 'https://www.youtube.com/watch?v=86eSdQYSjxA', title: 'The BJJ Hip Bump Sweep and How to Connect It to Other Attacks, by Jon Thomas', channel: 'Stephan Kesting', note: 'hip bump sweep from closed guard to mount, linked to kimura and guillotine' },
+  'closed-guard|bottom|back-control': { url: 'https://www.youtube.com/watch?v=e_c7G5T_ZR8', title: 'BJJ Techniques: Arm Drag to Back Take by Gordon Ryan', channel: 'BJJ Fanatics', note: 'arm drag from closed guard to the back' },
+  'closed-guard|bottom|ashi': { url: 'https://www.youtube.com/watch?v=dR2jWcEyabk', title: 'Straight Ankle Lock Submission When Opponent Stands - BJJ', channel: 'Jon Foster', note: 'straight ankle lock / ashi garami entry when the opponent stands up in your guard' },
+  // half-guard
+  'half-guard|top|side-control': { url: 'https://www.youtube.com/watch?v=yZ4mrxCUl_Q', title: '6 approaches to passing the knee shield (Lachlan Giles)', channel: 'Absolute MMA St Kilda - Melbourne', note: 'six ways to kill the knee shield and pass half guard to side control' },
+  'half-guard|top|mount': { url: 'https://www.youtube.com/watch?v=MCatAHEgRzg', title: 'How to Pass Half Guard and Go Straight to Mount with Henry Akins', channel: 'Bernardo Faria BJJ Fanatics', note: 'half guard pass going straight to mount' },
+  'half-guard|bottom|slx': { url: 'https://www.youtube.com/watch?v=m4_TgC5Zq_k', title: 'Low Knee Shield TRANSITIONS   Deep Half, X Guard & Single Leg X', channel: 'Aaron Benzrihem bjj', note: 'low knee shield transitions to deep half, X guard and single leg X' },
+  'half-guard|bottom|ashi': { url: 'https://www.youtube.com/watch?v=62-8SLjzUiw', title: 'Half Butterfly - Ashi Garami Leg Attacks: No Gi BJJ', channel: 'Brian Glick', note: 'half butterfly guard entries into ashi garami leg attacks' },
+  'half-guard|bottom|butterfly': { url: 'https://www.youtube.com/watch?v=mo1EkNQGVr8', title: 'How To Transition From Half-Guard To Butterfly Hook Sweep', channel: 'MMA Leech', note: 'knee shield half guard converting to a butterfly hook and sweep' },
+  'half-guard|bottom|turtle': { url: 'https://www.youtube.com/watch?v=HpOBGJBgmmo', title: 'Half Guard Underhook Attacks', channel: 'Absolute MMA St Kilda - Melbourne', note: 'win the underhook from half guard and come up to the knees / dogfight' },
+  // butterfly
+  'butterfly|top|half-guard': { url: 'https://www.youtube.com/watch?v=kRzYaYxi6_M', title: 'Counter the butterfly sweep with a knee cut pass (Lachlan Giles)', channel: 'Absolute MMA St Kilda - Melbourne', note: 'knee cut through the butterfly hook to counter the sweep, landing in half guard on the way past' },
+  'butterfly|top|side-control': { url: 'https://www.youtube.com/watch?v=LLSSUrds01E', title: 'Passing butterfly guard with the body lock (Lachlan Giles)', channel: 'Absolute MMA St Kilda - Melbourne', note: 'body lock pass against butterfly guard to side control' },
+  'butterfly|bottom|mount': { url: 'https://www.youtube.com/watch?v=9XULQjZeOEU', title: 'Basic Butterfly Sweep (Lachlan Giles)', channel: 'Absolute MMA St Kilda - Melbourne', note: 'basic butterfly sweep, elevating with the hook and coming up on top' },
+  'butterfly|bottom|slx': { url: 'https://www.youtube.com/watch?v=Ry1inz8xxfo', title: 'How to use Butterfly Guard to Setup X Guard (And Single X)', channel: 'Chewjitsu', note: 'using butterfly guard to set up X guard and single leg X when they stand' },
+  'butterfly|bottom|ashi': { url: 'https://www.youtube.com/watch?v=iJlsydO0zi0', title: 'EASY Leg Lock entries from Butterfly Guard! (10th Planet Jiu Jitsu)', channel: 'Brandon Mccaghren', note: 'leg lock (ashi garami) entries from butterfly guard' },
+  'butterfly|bottom|back-control': { url: 'https://www.youtube.com/watch?v=oTN0xEhm528', title: 'Marcelo Garcia: Arm Drag from Butterfly Guard', channel: 'Marcelo Garcia Jiu-Jitsu', note: 'arm drag from butterfly guard to the back' },
+  // slx
+  'slx|top|half-guard': { url: 'https://www.youtube.com/watch?v=XzILYmERAV8', title: 'Passing Single Leg X (Lachlan Giles)', channel: 'Absolute MMA St Kilda - Melbourne', note: 'clearing the knee line and driving the trapped knee across to pass single leg X into a half-guard / knee-cut position' },
+  'slx|top|side-control': { url: 'https://www.youtube.com/watch?v=FAlfIHm3Vqg', title: 'Lachlan Giles - Single Leg X Sweep Defense Forcing A Back Step Pass', channel: 'The Grapplers Guide by Jason Scully', note: 'defending the SLX sweep and back-stepping out of the entanglement to pass' },
+  'slx|bottom|ashi': { url: 'https://www.youtube.com/watch?v=fdGGvKijGtw', title: 'Single Leg X to Ashi Garami + straight ankle breakdown', channel: 'Still Rolling', note: 'sliding the outside hook down from single leg X into straight ashi for the ankle lock' },
+  'slx|bottom|mount': { url: 'https://www.youtube.com/watch?v=WfzKSzmQDfw', title: 'Getting up from overhook single leg X: A better way than the technical stand up (Lachlan Giles)', channel: 'Absolute MMA St Kilda - Melbourne', note: 'lifting the far hip and getting up to top position from single leg X (technical stand-up sweep and its refinement)' },
+  'slx|bottom|back-control': { url: 'https://www.youtube.com/watch?v=nitDtCdTDPg', title: 'De La Riva to Single Leg X Guard to Back Take - BJJ Technique', channel: 'Knight Jiu-Jitsu', note: 'scooting under from single leg X to take the back when the top player turns' },
+  // ashi
+  'ashi|top|inside-sankaku': { url: 'https://www.youtube.com/watch?v=H4yzzjIghMc', title: 'Opponent Posts Leg Cross Ashi Garami by John Danaher', channel: 'BJJ Fanatics', note: 'crossing the far leg into cross ashi / inside sankaku when the opponent posts' },
+  'ashi|top|fifty-fifty': { url: 'https://www.youtube.com/watch?v=ARFDTVkXKMs', title: 'Standard Ashi Garami to 5050: Inside positioning based entry into backside 5050', channel: 'RobertDiggleJJ', note: 'converting standard ashi garami into (backside) 50/50 using inside leg positioning' },
+  'ashi|top|side-control': { url: 'https://www.youtube.com/watch?v=3IfVDY7CUbU', title: 'Ashi Garami (BJJ Leglock): Sweep and Stay On Top', channel: 'Brian Glick', note: 'off-balancing the standing opponent from ashi garami, then heisting up to top position' },
+  'ashi|bottom|butterfly': { url: 'https://www.youtube.com/watch?v=0g_ALDkfU2Q', title: 'ASHI GARAMI ESCAPE - BJJ', channel: 'Brandon Mccaghren', note: 'stripping their foot off the hip and pulling the knee back out to sit up into guard' },
+  'ashi|bottom|half-guard': { url: 'https://www.youtube.com/watch?v=2PiXCnE0XxU', title: 'Basic Counter to Straight Ankle Lock and Escape from Ashi Garami | BJJ for Breakfast', channel: 'BJJ4Breakfast', note: 'booting the foot, clearing the knee line and driving the knee through to escape ashi garami' },
+  'ashi|bottom|side-control': { url: 'https://www.youtube.com/watch?v=_lQ5zAEBHvk', title: 'Footlocks and Escapes (Lachlan Giles)', channel: 'Absolute MMA St Kilda - Melbourne', note: 'defending the straight ankle lock and escaping the ashi garami entanglement to come up on top' },
+  // inside-sankaku
+  // inside-sankaku|top|ashi: no free clip found that shows this transition specifically
+  'inside-sankaku|top|back-control': { url: 'https://www.youtube.com/watch?v=vHgAtzvPXL0', title: 'Inside Sankaku Turn into Back Take by Josh Saunders', channel: 'BJJ Fanatics', note: 'following the opponent\'s turn out of inside sankaku into a back take' },
+  'inside-sankaku|top|side-control': { url: 'https://www.youtube.com/watch?v=YoP3X4I9ZZA', title: 'How To Use the Saddle To Sweep & Pass: Single Leg X Set Up To Knee Cut (BULLET POINT)', channel: 'PFed BJJ', note: 'sweeping from the saddle, coming up to combat base and finishing a knee cut pass' },
+  'inside-sankaku|bottom|half-guard': { url: 'https://www.youtube.com/watch?v=CFTLb8iywJg', title: 'Defending and escaping the saddle (Lachlan Giles)', channel: 'Absolute MMA St Kilda - Melbourne', note: 'hiding the heel, following the knee and driving it through to clear the saddle' },
+  'inside-sankaku|bottom|side-control': { url: 'https://www.youtube.com/watch?v=ufTGwJ4ZF74', title: 'Inside Heel Hook Defense and Escape. Saddle, 50/50, and more.', channel: 'Pica Pau Jiu Jitsu & Grappling', note: 'rotating heel slip, hiding the heel, then escaping the saddle position entirely to come up on top' },
+  // fifty-fifty
+  'fifty-fifty|top|inside-sankaku': { url: 'https://www.youtube.com/watch?v=_ypOKOSIh7M', title: 'The 411 Heel Hook from 50-50 Guard with Chris Ulbricht', channel: 'Submissions101', note: 'converting 50/50 into the 411 / inside sankaku for the heel hook' },
+  'fifty-fifty|top|ashi': { url: 'https://www.youtube.com/watch?v=Htk0TyHi2zg', title: 'Leg lock flow - ashi garami to side saddle to 50/50 to outside ashi to toe hold', channel: 'BJJ4Breakfast', note: 'flow drill whose last step exits 50/50 into an ashi garami variant (outside ashi, not straight ashi) for the toe hold' },
+  'fifty-fifty|top|side-control': { url: 'https://www.youtube.com/watch?v=RLrcQwNX0iU', title: '50/50 Sweep and Pass', channel: 'Tarik BJJ', note: 'off-balancing from 50/50 to come up on top, then clearing the leg and passing' },
+  'fifty-fifty|bottom|ashi': { url: 'https://www.youtube.com/watch?v=R7lPdQWLOus', title: 'Lachlan Giles - 50/50 Defense - Importance of Protecting Your Leg', channel: 'The Grapplers Guide by Jason Scully', note: 'hiding the heel and protecting the trapped leg in 50/50 before disengaging (defence half of the route; exit to ashi not shown explicitly)' },
+  'fifty-fifty|bottom|half-guard': { url: 'https://www.youtube.com/watch?v=cJs8PSIvKoY', title: 'Learn to Pass the 50/50 Guard in Under 4 Minutes with Keenan Cornelius', channel: 'Keenan Cornelius', note: 'freeing the foot and dropping weight onto the knee to exit 50/50 into a half-guard smash pass (gi)' },
+  // side-control
+  'side-control|top|knee-on-belly': { url: 'https://www.youtube.com/watch?v=qCWl3bnU6wM', title: 'Grappling for Beginners: Side Control to Knee on Belly Transition', channel: 'Owen King (Fighter Training Online Academy)', note: 'posting on the hip and stepping the knee across the belly from side control' },
+  'side-control|top|north-south': { url: 'https://www.youtube.com/watch?v=vvZJYBd7z3o', title: 'Side Control to North/South Position by Joao Crus', channel: 'BJJ Fanatics', note: 'walking around the head from side control into north-south while controlling the far arm' },
+  'side-control|top|mount': { url: 'https://www.youtube.com/watch?v=kL-G30nq3SU', title: 'Easy Mount Transition from Side Control by Attacking the Armlock 1st', channel: 'Chewjitsu', note: 'kimura threat forces the reaction, then the knee slides across to mount' },
+  'side-control|top|back-control': { url: 'https://www.youtube.com/watch?v=IF2SmodVR8E', title: 'BJJ - Taking the back from side control', channel: 'Samir Seif', note: 'reverse hip heist to chair-sit back take as they turn away from side control' },
+  'side-control|bottom|half-guard': { url: 'https://www.youtube.com/watch?v=cuXq-k__9lQ', title: 'How To Do The Perfect BJJ Side Control Escape by John Danaher', channel: 'Bernardo Faria BJJ Fanatics', note: 'frame, shrimp and reinsert the knee to recover guard from bottom side control' },
+  'side-control|bottom|closed-guard': { url: 'https://www.youtube.com/watch?v=vcHjH5MvPsk', title: 'BJJ | How To Escape From Side Control To Closed Guard', channel: 'Evolve Mixed Martial Arts', note: 'bridge and shrimp escape from side control all the way back to closed guard' },
+  'side-control|bottom|turtle': { url: 'https://www.youtube.com/watch?v=cqADGeH-fgo&t=225s', title: 'How to Escape Side Control Without Playing Guard', channel: 'Boston Submission Fighting', note: 'clear the crossface and turn to turtle (chapters at 3:45 toward them and 5:58 away) then wrestle up' },
+  'side-control|bottom|butterfly': { url: 'https://www.youtube.com/watch?v=M-4yYDNSGkY', title: 'Side Control Escape to Butterfly Guard', channel: 'JeanJacquesMachado', note: 'escape from side control straight into butterfly guard with follow-up sweeps' },
+  // north-south
+  // north-south|top|side-control: no free clip found that shows this transition specifically
+  'north-south|top|mount': { url: 'https://www.youtube.com/watch?v=PTp0EtyxA-I', title: 'Transition from North South to Mount  - BJJ', channel: 'Marcos Cerqueira Brazilian Jiu-Jitsu', note: 'walking from north-south to mount while keeping control of both arms for an arm triangle' },
+  'north-south|top|back-control': { url: 'https://www.youtube.com/watch?v=SAKV7M_yDUs', title: 'North South Position To Choke & Back Control', channel: 'JeanJacquesMachado', note: 'sitting them up from north-south to take the back or choke' },
+  'north-south|bottom|turtle': { url: 'https://www.youtube.com/watch?v=A9PAlXwclPI', title: 'How to Escape a Tight North South in BJJ (2 BJJ Effective Options)', channel: 'Chewjitsu', note: 'two north-south escapes depending on arm placement, circling the knees under to turtle and come up' },
+  'north-south|bottom|half-guard': { url: 'https://www.youtube.com/watch?v=GW0wLdv8VW8', title: 'Bernardo Faria\'s North South Escape', channel: 'BJJ Fanatics', note: 'grip the pant leg and walk the hips around to feed their leg into half guard' },
+  // knee-on-belly
+  'knee-on-belly|top|mount': { url: 'https://www.youtube.com/watch?v=hboiOvqegus', title: 'Knee on Belly Transition Knee on Belly to Mount', channel: 'Great Grappling', note: 'drill switching knee on belly side to side and sliding the knee across into mount' },
+  'knee-on-belly|top|back-control': { url: 'https://www.youtube.com/watch?v=m1wVnwzqjW4', title: 'Knee On Belly Transitions to Mount & Back Controls - BJJ Basics', channel: 'MMA Leech', note: 'Gustavo Gasperin: holding knee on belly and taking the back when they turn away, plus the mount option' },
+  // knee-on-belly|top|side-control: no free clip found that shows this transition specifically
+  'knee-on-belly|bottom|half-guard': { url: 'https://www.youtube.com/watch?v=zKFDRsLkN34', title: 'Knee on Belly Escapes (Lachlan Giles)', channel: 'Absolute MMA St Kilda - Melbourne', note: 'frame on hip and knee, shrimp away and reinsert the knee to recover guard' },
+  // knee-on-belly|bottom|butterfly: no free clip found that shows this transition specifically
+  'knee-on-belly|bottom|turtle': { url: 'https://www.youtube.com/watch?v=N6s_QRsiuGs', title: 'How to Escape Knee on Belly in No-Gi BJJ | Complete Escape System', channel: 'Energia Martial Arts', note: 'five no-gi knee on belly escapes including turning in and wrestling up to reverse the position' },
+  // mount
+  'mount|top|s-mount': { url: 'https://www.youtube.com/watch?v=h-y9OUbkuSI', title: 'Mount to a Heavy S-Mount Transition to Armbar Submission (a BJJ Video)', channel: 'Training Jiu Jitsu', note: 'climbing from mount into S-mount and finishing the armbar' },
+  'mount|top|back-control': { url: 'https://www.youtube.com/watch?v=b13oupRc9xE', title: 'How to Take the Back from Mount (Advanced Technique)', channel: 'Stephan Kesting', note: 'rolling back take from mount as they turn to their side' },
+  'mount|bottom|half-guard': { url: 'https://www.youtube.com/watch?v=S5zkk2B7pfw', title: 'Mount escape: The most important battle to win + live examples (Lachlan Giles)', channel: 'Absolute MMA St Kilda - Melbourne', note: 'elbow-knee escape: frame the hip, pry the knee and trap a leg to recover half guard' },
+  'mount|bottom|closed-guard': { url: 'https://www.youtube.com/watch?v=FyqaWxyMtLc', title: 'Mastering The Elbow Escape - Jiu-Jitsu Fundamentals', channel: 'Knight Jiu-Jitsu', note: 'elbow escape from mount continued all the way to full guard, with counters to common blocks' },
+  // mount|bottom|turtle: no free clip found that shows this transition specifically
+  // s-mount
+  's-mount|top|back-control': { url: 'https://www.youtube.com/watch?v=aVDYz6OeOnc', title: 'BJJ Technique - TAKE THE BACK From S Mount - Flatten Opponent - Choke | Brazilian Jiu Jitsu', channel: 'Andrew Chappelle BJJ', note: 'sit them up from S-mount, roll to the back and follow them to belly-down back mount' },
+  's-mount|top|mount': { url: 'https://www.youtube.com/watch?v=jaujxC4Rpyo', title: 'The S-mount entry you learn now and use your whole life', channel: 'JeanJacquesMachado', note: 'the mount to S-mount transition (shown from mount into S-mount; reverse it to settle back to mount)' },
+  's-mount|bottom|half-guard': { url: 'https://www.youtube.com/watch?v=TOQ9I4gYOaU', title: 'Escaping S Mount To Half Guard by Paul Schreiner', channel: 'BJJ Fanatics', note: 'bridge and turn into them from S-mount to recover half guard' },
+  's-mount|bottom|mount': { url: 'https://www.youtube.com/watch?v=PI7rr0TzmWw', title: 'S Mount Defense by Dinu Bucalet', channel: 'BJJ Fanatics', note: 'frame and square up to the S-mount so the top player drops back to regular mount' },
+  // back-control
+  'back-control|top|body-triangle': { url: 'https://www.youtube.com/watch?v=PNeuHQzMPXc&t=2421s', title: 'Advanced Back Control: Arm Traps, Body Triangles, and Chokes (Full BJJ Instructional)', channel: 'Gold BJJ', note: 'locking the body triangle from seatbelt-and-hooks back control (chapter \'The Body Triangle\' at 40:21)' },
+  'back-control|top|back-mount-belly': { url: 'https://www.youtube.com/watch?v=c1H8JM79FU4', title: 'Back Mount Just Got Worse . . . For Your Opponent', channel: 'Chewjitsu', note: 'hip-bump the opponent from seated hooks onto their stomach and hold belly-down back mount with a chin strap' },
+  'back-control|bottom|half-guard': { url: 'https://www.youtube.com/watch?v=k-lCzVAzJpg', title: 'Escaping the back . Pay attention to the leg work (Lachlan Giles)', channel: 'Absolute MMA St Kilda - Melbourne', note: 'two-on-one on the choking arm, fall to the hook side, clear the bottom hook and come up in half guard' },
+  'back-control|bottom|closed-guard': { url: 'https://www.youtube.com/watch?v=V_U1IHL2iGQ&t=748s', title: 'Complete Guide to Escaping Back Control | Jiu-Jitsu Escapes', channel: 'Knight Jiu-Jitsu', note: 'body-triangle-side escape that lifts the leg and turns in to close the guard (about 12:28)' },
+  'back-control|bottom|turtle': { url: 'https://www.youtube.com/watch?v=V_U1IHL2iGQ&t=45s', title: 'Complete Guide to Escaping Back Control | Jiu-Jitsu Escapes', channel: 'Knight Jiu-Jitsu', note: 'early escape from seated back control that pivots out to turtle (about 0:45)' },
+  // body-triangle
+  'body-triangle|top|back-control': { url: 'https://www.youtube.com/watch?v=8JwxpgWGsFU', title: 'Gordon Ryan - How to properly use a body triangle', channel: 'Less Impressed More Involved BJJ', note: 'Gordon Ryan switching from the locked body triangle back to two hooks after settling the upper body' },
+  // body-triangle|top|back-mount-belly: no free clip found that shows this transition specifically
+  'body-triangle|bottom|half-guard': { url: 'https://www.youtube.com/watch?v=PBhrep1jRcg&t=100s', title: 'THE BEST WAY TO ESCAPE FROM THE BODY TRIANGLE IN JIU-JITSU BY GIANCARLO BODONI - BACK MOUNT ESCAPES!', channel: 'Giancarlo Bodoni', note: 'Bodoni\'s body triangle escape to guard (chapter \'How to escape the body triangle\' at 1:40)' },
+  'body-triangle|bottom|turtle': { url: 'https://www.youtube.com/watch?v=RscLPT0F-DE', title: 'The Best Way To Escape From The Jiu Jitsu Body Triangle by Gordon Ryan', channel: 'Bernardo Faria BJJ Fanatics', note: 'elbow under the locked knee, turn the hips to the mat and scissor the ankle to unlock, then come to knees or top' },
+  // back-mount-belly
+  'back-mount-belly|top|back-control': { url: 'https://www.youtube.com/watch?v=mqAbQWgAtqk', title: 'Cross Body Chair Sit Back Control | with Black Belt Rory van Vliet', channel: 'Gold BJJ', note: 'chair sit from a top back ride (opponent on their side/stomach) into seated back control with hooks' },
+  'back-mount-belly|top|body-triangle': { url: 'https://www.youtube.com/watch?v=0X7_7iyktjY', title: 'Back Attack Sequence: Breaking Open the Turtle, Body Triangle and RNC Finishing Details (Big Series)', channel: 'Joe Scioli', note: 'from the top back ride, halo the hip and bring the low hook over to lock the body triangle, then RNC' },
+  'back-mount-belly|bottom|turtle': { url: 'https://www.youtube.com/watch?v=UMfePCKmwzk', title: 'BJJ GJJ White Belt Series 1 Worst Position Ever Escape (Back Escape Face Down)', channel: 'Ryan Young', note: 'kick a leg free of the hook and curl to the side to base up from face-down back mount' },
+  'back-mount-belly|bottom|half-guard': { url: 'https://www.youtube.com/watch?v=Hy-vDwjB8x4', title: 'Belly Down Back Escape', channel: 'Vintage40BJJ', note: 'from belly-down back mount, hip through and elbow-escape the knee to recover half guard' },
+  // turtle
+  'turtle|top|back-control': { url: 'https://www.youtube.com/watch?v=Zso1kcw8vY0', title: 'Taking the Back from Turtle (Lachlan Giles)', channel: 'Absolute MMA St Kilda - Melbourne', note: 'Lachlan Giles on inserting the hooks and taking the back from turtle' },
+  'turtle|top|side-control': { url: 'https://www.youtube.com/watch?v=u5IBUqZRu14', title: 'Turtle Turnover into a HELLISH Version of Side Control', channel: 'Stephan Kesting', note: 'double-armpit turtle turnover into side control' },
+  'turtle|bottom|half-guard': { url: 'https://www.youtube.com/watch?v=pTLNsCv1aCw', title: 'Turtle To Half Guard by Bernardo Faria', channel: 'BJJ Fanatics', note: 'turn in from turtle to recover half guard' },
+  'turtle|bottom|butterfly': { url: 'https://www.youtube.com/watch?v=61unSJ7vu4I', title: 'Recovering from the Turtle (Lachlan Giles)', channel: 'Absolute MMA St Kilda - Melbourne', note: 'Granby / shoulder roll from turtle back to butterfly guard' },
+  'turtle|bottom|standing': { url: 'https://www.youtube.com/watch?v=ljGFV2KwULY', title: 'The 5 Best Ways To Escape The Turtle Position', channel: 'Ritchie Yip', note: 'Granby roll and standing up head-first to escape turtle to the feet' },
+};
+const routeVideo = (from, role, to) => ROUTE_VIDEOS[`${from}|${role}|${to}`] || null;
+const routeVideoCount = () => NODES.reduce((n, c) => n + c.topNext.filter(t => routeVideo(c.id, 'top', t)).length + c.bottomNext.filter(t => routeVideo(c.id, 'bottom', t)).length, 0);
+const routeEdgeCount = () => NODES.reduce((n, c) => n + c.topNext.length + c.bottomNext.length, 0);
+// Small play link for a chip; empty string when there is no video for that edge.
+const videoMark = (from, role, to) => { const v = routeVideo(from, role, to); return v ? `<a href="${v.url}" target="_blank" rel="noopener" title="${v.note.replace(/"/g, '&quot;')} · ${v.channel.replace(/"/g, '&quot;')}" class="text-[11px] text-slate-500 hover:text-slate-100 px-1 -ml-1" aria-label="watch: ${v.note.replace(/"/g, '&quot;')}">&#9654;</a>` : ''; };
+
 const MEDIA_KEY = 'bjj-state-machine.media.v1';
 const mediaLocal = loadJSON(MEDIA_KEY, {});
 // Local files under img/ are gitignored, so a hosted copy of this page will not have them.
@@ -1203,8 +1326,8 @@ function nodeDrawer(n) {
     ${drawerHeader(badge(f.label, true) + badge(`T${n.tier} · ${t.label}`), n.name)}
     <div class="mb-4">${mediaPanel(n.id)}</div>
     <p class="text-sm text-slate-300 leading-relaxed mb-6">${linkify(n.summary, n.id)}</p>
-    ${routeBlock('If on top · advancing', n.topLabel, n.topRoute)}
-    ${routeBlock('If on bottom · escaping / recovering', n.bottomLabel, n.bottomRoute)}
+    ${routeBlock('If on top · advancing', n.topLabel, n.topRoute, n.id, 'top')}
+    ${routeBlock('If on bottom · escaping / recovering', n.bottomLabel, n.bottomRoute, n.id, 'bottom')}
     <div class="space-y-4 mt-6">
       ${POSITION_SECTIONS.map(s => `
         <div>
@@ -1213,8 +1336,8 @@ function nodeDrawer(n) {
         </div>`).join('')}
     </div>
     <div class="mt-6 grid grid-cols-2 gap-3">
-      ${chipList('Promotes to (top)', n.topNext)}
-      ${chipList('Recovers to (bottom)', n.bottomNext)}
+      ${nextChipList('Promotes to (top)', n.id, 'top', n.topNext)}
+      ${nextChipList('Recovers to (bottom)', n.id, 'bottom', n.bottomNext)}
     </div>
     <div class="mt-6 pt-4 border-t border-slate-800">
       ${chipList('Grips you will hear called here', gripsHere.map(g => g.id))}
@@ -1250,15 +1373,22 @@ function gripDrawer(g) {
     <button id="drawer-drill" class="mt-6 w-full text-xs uppercase tracking-wider px-3 py-2 rounded border border-slate-600 hover:border-slate-300 text-slate-200">drill this card →</button>`;
 }
 
-function routeBlock(title, role, steps) {
+function routeBlock(title, role, steps, fromId, side) {
   return `
     <div class="mb-4">
       <h4 class="text-[10px] uppercase tracking-widest text-slate-500 mb-2">${title} <span class="text-slate-600">· ${role}</span></h4>
       <div class="flex flex-wrap items-center gap-1.5">${steps.map((s, i) =>
         (i ? '<span class="text-slate-600 text-[11px]">→</span>' : '') +
-        (s.startsWith('@') ? idChip(s.slice(1)) : `<span class="text-[11px] text-slate-300 bg-slate-800/80 rounded px-2 py-0.5">${s}</span>`)
+        (s.startsWith('@') ? idChip(s.slice(1)) + (fromId ? videoMark(fromId, side, s.slice(1)) : '') : `<span class="text-[11px] text-slate-300 bg-slate-800/80 rounded px-2 py-0.5">${s}</span>`)
       ).join('')}</div>
     </div>`;
+}
+// Chip list for a node's next positions, each followed by a play mark when a route video exists.
+function nextChipList(title, fromId, side, ids) {
+  return `<div>
+    <h4 class="text-[10px] uppercase tracking-widest text-slate-500 mb-2">${title}</h4>
+    <div class="flex flex-wrap items-center gap-1.5">${ids.map(id => idChip(id) + videoMark(fromId, side, id)).join('') || '<span class="text-[11px] text-slate-600">—</span>'}</div>
+  </div>`;
 }
 function idChip(id) {
   const k = KINDS[kindOf(id)];
@@ -1464,8 +1594,8 @@ function renderCall() {
   if (!revealed) return;
   const other = holder === 'top' ? 'bottom' : 'top';
   rev.innerHTML = `
-    ${routeBlock('Bottom destination', n.bottomLabel, n.bottomRoute)}
-    ${routeBlock('Top destination', n.topLabel, n.topRoute)}
+    ${routeBlock('Bottom destination', n.bottomLabel, n.bottomRoute, n.id, 'bottom')}
+    ${routeBlock('Top destination', n.topLabel, n.topRoute, n.id, 'top')}
     ${g ? `
     <div class="rounded border border-slate-800 bg-slate-800/30 p-3 space-y-3">
       <div>
@@ -1518,9 +1648,9 @@ function newQuiz() {
   steps.push({ q: `which ${kind} is this?`, options: shuffle([c, ...distractors(c, kind, 3, [])]).map(o => ({ id: o.id, label: o.name, ok: o.id === c.id })), srs: true });
   if (kind === 'position') {
     const top = NODE_BY_ID[c.topNext[Math.floor(Math.random() * c.topNext.length)]];
-    steps.push({ q: `you are on top here (${c.topLabel.toLowerCase()}). where do you go next?`, options: shuffle([top, ...distractors(top, 'position', 3, c.topNext)]).map(o => ({ id: o.id, label: o.name, ok: c.topNext.includes(o.id) })), explain: `top: ${c.top}` });
+    steps.push({ q: `you are on top here (${c.topLabel.toLowerCase()}). where do you go next?`, options: shuffle([top, ...distractors(top, 'position', 3, c.topNext)]).map(o => ({ id: o.id, label: o.name, ok: c.topNext.includes(o.id) })), explain: `top: ${c.top}`, side: 'top' });
     const btm = NODE_BY_ID[c.bottomNext[Math.floor(Math.random() * c.bottomNext.length)]];
-    steps.push({ q: `you are on bottom here (${c.bottomLabel.toLowerCase()}). where do you recover to?`, options: shuffle([btm, ...distractors(btm, 'position', 3, c.bottomNext)]).map(o => ({ id: o.id, label: o.name, ok: c.bottomNext.includes(o.id) })), explain: `bottom: ${c.bottom}` });
+    steps.push({ q: `you are on bottom here (${c.bottomLabel.toLowerCase()}). where do you recover to?`, options: shuffle([btm, ...distractors(btm, 'position', 3, c.bottomNext)]).map(o => ({ id: o.id, label: o.name, ok: c.bottomNext.includes(o.id) })), explain: `bottom: ${c.bottom}`, side: 'bottom' });
   } else {
     const p = NODE_BY_ID[c.positions[Math.floor(Math.random() * c.positions.length)]];
     steps.push({ q: 'where does this grip show up?', options: shuffle([p, ...distractors(p, 'position', 3, c.positions)]).map(o => ({ id: o.id, label: o.name, ok: c.positions.includes(o.id) })), explain: `sets up: ${c.setsUp}` });
@@ -1559,7 +1689,7 @@ function renderQuiz() {
   fb.hidden = !quiz.answered;
   if (quiz.answered) {
     const ok = st.options.find(o => o.id === quiz.picked)?.ok;
-    fb.innerHTML = `<span class="${ok ? 'text-emerald-400' : 'text-rose-400'}">${ok ? 'correct.' : 'no.'}</span> ${linkify(st.explain ? st.explain : (kindOf(c.id) === 'position' ? c.summary : c.controls), c.id)}`;
+    fb.innerHTML = `<span class="${ok ? 'text-emerald-400' : 'text-rose-400'}">${ok ? 'correct.' : 'no.'}</span> ${linkify(st.explain ? st.explain : (kindOf(c.id) === 'position' ? c.summary : c.controls), c.id)}${quizWatchLinks(c, st)}`;
     fb.querySelectorAll('[data-goto]').forEach(b => b.onclick = () => openDrawer(b.dataset.goto));
   }
   document.getElementById('quiz-next').hidden = !quiz.answered;
@@ -1567,6 +1697,14 @@ function renderQuiz() {
   document.getElementById('quiz-detail').hidden = !(quiz.step > 0 || quiz.answered);
 }
 
+// After a route step is answered: one "watch" link per correct destination that has a route video.
+function quizWatchLinks(c, st) {
+  if (!st.side) return '';
+  const vids = st.options.filter(o => o.ok).map(o => ({ o, v: routeVideo(c.id, st.side, o.id) })).filter(x => x.v);
+  if (!vids.length) return '';
+  return `<div class="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[11px]">${vids.map(({ o, v }) =>
+    `<a href="${v.url}" target="_blank" rel="noopener" class="text-slate-400 hover:text-slate-100 underline underline-offset-2 decoration-slate-700" title="${v.title.replace(/"/g, '&quot;')} · ${v.channel.replace(/"/g, '&quot;')}">&#9654; watch: ${c.name.replace(/\s*\(.*\)$/, '')} → ${o.label.replace(/\s*\(.*\)$/, '')} <span class="text-slate-600">· ${v.channel}</span></a>`).join('')}</div>`;
+}
 function answerQuiz(id) {
   if (!quiz.cur || quiz.answered) return;
   const st = quiz.steps[quiz.step];
@@ -1598,6 +1736,7 @@ function renderQuizStats() {
     return `<div class="flex justify-between"><span>${label}</span><span class="text-slate-200">${withP.length}/${arr.length} photos · ${ver.length} verified</span></div>`;
   };
   document.getElementById('quiz-coverage').innerHTML = cov(NODES, 'positions') + cov(GRIPS, 'grips') +
+    `<div class="flex justify-between"><span>route videos</span><span class="text-slate-200">${routeVideoCount()}/${routeEdgeCount()} transitions</span></div>` +
     `<div class="text-[10px] text-slate-600 pt-1">missing: ${[...NODES, ...GRIPS].filter(c => !mediaFor(c.id).length).map(c => c.name.replace(/\s*\(.*\)$/, '')).join(', ') || 'none'}</div>`;
 }
 function renderQuizDeckChips() {
