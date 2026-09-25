@@ -1630,7 +1630,7 @@ function renderCall() {
 // =====================================================================
 // QUIZ · photo → identify → where next
 // =====================================================================
-const quiz = { cur: null, step: 0, answered: false, session: { asked: 0, right: 0, routeRight: 0, routeAsked: 0 }, verifiedOnly: false };
+const quiz = { cur: null, step: 0, answered: false, idDone: false, session: { asked: 0, right: 0, routeRight: 0, routeAsked: 0 }, verifiedOnly: false };
 const shuffle = a => a.map(x => [Math.random(), x]).sort((p, q) => p[0] - q[0]).map(p => p[1]);
 
 function quizPool() {
@@ -1667,7 +1667,7 @@ function newQuiz() {
     const p = NODE_BY_ID[c.positions[Math.floor(Math.random() * c.positions.length)]];
     steps.push({ q: 'where does this grip show up?', options: shuffle([p, ...distractors(p, 'position', 3, c.positions)]).map(o => ({ id: o.id, label: o.name, ok: c.positions.includes(o.id) })), explain: `sets up: ${c.setsUp}` });
   }
-  quiz.cur = c; quiz.steps = steps; quiz.step = 0; quiz.answered = false; quiz.photo = quizPhotoFor(c.id);
+  quiz.cur = c; quiz.steps = shuffle(steps); quiz.step = 0; quiz.answered = false; quiz.idDone = false; quiz.photo = quizPhotoFor(c.id);
   renderQuiz();
 }
 
@@ -1679,13 +1679,13 @@ function renderQuiz() {
   if (!quiz.cur) { card.hidden = true; empty.hidden = false; return; }
   card.hidden = false; empty.hidden = true;
   const c = quiz.cur, k = KINDS[kindOf(c.id)], st = quiz.steps[quiz.step];
-  card.className = `rounded-lg border border-slate-700 bg-slate-900/90 p-5 sm:p-7 accent-glow ${quiz.step === 0 && !quiz.answered ? '' : k.cls(c)}`;
+  card.className = `rounded-lg border border-slate-700 bg-slate-900/90 p-5 sm:p-7 accent-glow ${quiz.idDone ? k.cls(c) : ''}`;
   const m = quiz.photo;
   document.getElementById('quiz-photo').innerHTML = `
     <img src="${m.src}" alt="" referrerpolicy="no-referrer" class="w-full max-h-[380px] object-contain bg-slate-950 rounded" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'aspect-video flex items-center justify-center text-[11px] text-slate-500 border border-dashed border-slate-700 rounded',textContent:'image failed to load'}))">
     <div class="flex flex-wrap gap-x-3 mt-2 text-[10px] text-slate-500">
       <span class="${m.verified ? 'text-emerald-400' : 'text-amber-400'}">${m.verified ? 'verified photo' : 'unverified photo'}</span>
-      ${quiz.step > 0 || quiz.answered ? `<span class="text-slate-300">${c.name}</span>${m.note ? `<span>${m.note}</span>` : ''}` : ''}
+      ${quiz.idDone ? `<span class="text-slate-300">${c.name}</span>${m.note ? `<span>${m.note}</span>` : ''}` : ''}
       ${m.page ? `<a href="${m.page}" target="_blank" rel="noopener" class="underline underline-offset-2 hover:text-slate-200">source</a>` : ''}
       <span class="ml-auto">step ${quiz.step + 1} / ${quiz.steps.length}</span>
     </div>`;
@@ -1706,7 +1706,7 @@ function renderQuiz() {
   }
   document.getElementById('quiz-next').hidden = !quiz.answered;
   document.getElementById('quiz-next').innerHTML = (quiz.step < quiz.steps.length - 1 ? 'next step' : 'next photo') + ' <kbd class="border-slate-400 text-slate-700">space</kbd>';
-  document.getElementById('quiz-detail').hidden = !(quiz.step > 0 || quiz.answered);
+  document.getElementById('quiz-detail').hidden = !quiz.idDone;
 }
 
 // After a route step is answered: one "watch" link per correct destination that has a route video.
@@ -1724,6 +1724,7 @@ function answerQuiz(id) {
   const ok = !!st.options.find(o => o.id === id)?.ok;
   quiz.picked = id; quiz.answered = true;
   if (st.srs) {
+    quiz.idDone = true;
     quiz.session.asked++; if (ok) quiz.session.right++;
     const s = cardState(quiz.cur.id); s.seen++; state.srs.counter++;
     if (ok) { s.correct++; s.box = Math.min(s.box + 1, INTERVALS.length - 1); s.due = state.srs.counter + INTERVALS[s.box]; }
