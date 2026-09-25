@@ -1131,10 +1131,17 @@ const state = {
   session: { shown: 0, got: 0, review: 0 },
   call: null,
   srs: loadJSON(SRS_KEY, { counter: 0, cards: {} }),
-  prefs: loadJSON(PREF_KEY, { hidden: {}, mode: 'roadmap', deck: 'positions' }),
+  prefs: loadJSON(PREF_KEY, { hidden: {}, mode: 'roadmap', deck: 'both' }),
 };
 for (const k of Object.values(KINDS)) for (const s of k.sections) if (state.prefs.hidden[s.key] === undefined) state.prefs.hidden[s.key] = true;
 state.mode = state.prefs.mode || 'roadmap';
+// The quiz deck used to default to positions only, so grip cards never came up. Move existing
+// browsers onto the full deck once. The flag means a later deliberate choice of 'positions' sticks.
+if (!state.prefs.deckBothMigration) {
+  if (state.prefs.deck === 'positions') state.prefs.deck = 'both';
+  state.prefs.deckBothMigration = true;
+  saveJSON(PREF_KEY, state.prefs);
+}
 
 function loadJSON(key, fallback) {
   try { const v = localStorage.getItem(key); return v ? { ...fallback, ...JSON.parse(v) } : fallback; }
