@@ -328,7 +328,7 @@ const NODES = [
     wedge: 'Bottom: insteps hooked under both thighs, hips off the mat, torso angled. Top: elbows glued to the ribs and chest heavy so there is no space for the hook to lift.',
     topRoute: ['Pin the knees / bodylock', 'Float over the knee line', '@half-guard', '@side-control'],
     bottomRoute: ['Grip + hooks', 'Kuzushi (off-balance)', 'Elevate & sweep', '@mount', 'or: they stand', '@slx'],
-    topNext: ['half-guard', 'side-control'], bottomNext: ['mount', 'slx', 'ashi', 'back-control'],
+    topNext: ['half-guard', 'side-control', 'single-under'], bottomNext: ['mount', 'slx', 'ashi', 'back-control'],
   },
   {
     id: 'slx', name: 'Single Leg X (SLX) / Seated Guard', family: 'guards', tier: 2,
@@ -341,6 +341,19 @@ const NODES = [
     topRoute: ['Drive knee across (clear knee line)', 'Free the trapped leg', '@half-guard', '@side-control'],
     bottomRoute: ['Lift the far hip', 'Technical stand-up sweep', '@mount', 'or: hook slides down', '@ashi'],
     topNext: ['half-guard', 'side-control'], bottomNext: ['ashi', 'mount', 'back-control'],
+  },
+  {
+    // Taught by Jozef Chen at the Guangzhou intensive (October 2026); cues below are his, from the class video.
+    id: 'single-under', name: 'Single Under (Scoop Single Stack)', family: 'guards', tier: 2,
+    topLabel: 'Top (passing)', bottomLabel: 'Bottom (guard)',
+    summary: 'A stack pass against open guard. When the guard player puts a leg high on you while you are facing their upper body, drop your knee and scoop that leg with one arm, so it ends up over your shoulder with their knee driven to their own chest. Jozef Chen\'s version finishes as statically as possible rather than turning to run around the legs.',
+    top: 'Use the forearm, not the hand: wedge your scooping forearm across their waist as close to the hip as you can and drive their knee to their chest, so their own thigh and ribs trap your hand. The other hand goes behind their bottom knee with four fingers behind it, thumb up and elbow bent. Then lift your head and pop your shoulder through the leg. From there, leg drag, or switch to a smash pass if they turn in to face you.',
+    bottom: 'Fight the grips before the knee is pinned to your chest. If the hand on your knee is only a thumb, pull it through. If their arm straightens, straight-arm it to pull it through. If they turn away to finish, the movement is your chance to escape. Once the shoulder has popped through, turtling is very hard, so the time to act is before that.',
+    dangers: 'Top: a loose hand on the knee (thumb only, or a straight arm) gets pulled through; turning away to finish gives them movement and a way out. Bottom: stacked flat with your knee on your chest and their shoulder through, and turtle mostly closed off.',
+    wedge: 'Top: the scooping forearm wedged between their thigh and ribs at the hip; four fingers behind the far knee, elbow bent. Bottom: a grip or frame on that forearm before your knee reaches your chest.',
+    topRoute: ['They put a leg high', 'Drop the knee, scoop the leg', 'Forearm on the hip, knee to chest', 'Four fingers behind the far knee', 'Lift the head, pop the shoulder through', '@side-control'],
+    bottomRoute: ['Strip the hand off your knee', 'Frame on the scooping forearm', 'Recover the knee line', '@half-guard', 'or: they turn to finish', '@turtle'],
+    topNext: ['side-control', 'back-control'], bottomNext: ['half-guard', 'turtle'],
   },
   {
     id: 'ashi', name: 'Straight Ashi Garami', family: 'legs', tier: 2,
@@ -755,6 +768,10 @@ const VICOS = (id, note) => ({ src: `img/${id}.jpg`, page: 'https://www.vicos.si
 // Stills captured from Nomadic Grappling, a paid instructional. Personal study only; img/ is gitignored
 // and the deploy is behind Vercel Authentication, so these are never published.
 const NOMAD = (id, note) => ({ src: `img/${id}.jpg`, page: '', credit: 'Nomadic Grappling still, personal use only', note: note || '', verified: true });
+// Looping GIFs and short MP4s cut from Zachary's own phone video of Jozef Chen's class at the Guangzhou intensive
+// (October 2026, IMG_0712). Private: they live in img/guangzhou/, which is gitignored, and are never published.
+// GIFs come first so thumbnails and the quiz use them; the MP4s keep Jozef's spoken cues.
+const JOZEF = (file, note) => ({ src: `img/guangzhou/${file}`, page: '', credit: 'Jozef Chen, Guangzhou intensive, personal use only', note: note || '', verified: true });
 
 const MEDIA_SEED = {
   'closed-guard': [V('Brazilian Jiu-jitsu-Closed guard.jpg', 'closed guard, ankles locked behind the top player, gi', 'MartialArtsNomad.com, CC BY 2.0, via Wikimedia Commons')],
@@ -786,6 +803,20 @@ const MEDIA_SEED = {
   'g-gable': [YT('g-gable', 'gable grip: palms pressed flat together, fingers alongside, nothing interlaced or hooked', 'https://www.youtube.com/watch?v=RhADfQCsZ6E&t=176s', 'Knight Jiu-Jitsu, Guide to Grip Usage for Grappling (YouTube), personal use only')],
   'g-heel': [YT('g-heel', 'heel grip: the heel cupped in the hand with the forearm blade under the ankle, from a leg entanglement', 'https://www.youtube.com/watch?v=hNTsYUShvLU&t=54s', 'Evolve University, BJJ: How To Do A Basic Heel Hook (YouTube), personal use only')],
   'g-bodylock': [V('Body Lock (6455271627).jpg', 'rear bodylock in wrestling, opponent on all fours', 'Chris Hunkeler, CC BY-SA 2.0, via Wikimedia Commons')],
+  'single-under': [
+    JOZEF('single-under-1-entry.gif', 'step 1, looping: they put a leg high, he drops his knee and scoops it onto his shoulder'),
+    JOZEF('single-under-2-forearm.gif', 'step 2, looping: forearm wedged across the hip, their knee driven to their chest'),
+    JOZEF('single-under-3-hand.gif', 'step 3, looping: other hand cupped behind the far knee, four fingers in, elbow bent'),
+    JOZEF('single-under-4-finish.gif', 'step 4, looping: stacked, he lifts his head and pops the shoulder through the leg'),
+    JOZEF('single-under-7-static.gif', 'step 7, looping: shoulder popped through, settling into a static pin'),
+    JOZEF('single-under-1-entry.mp4', 'clip 0:31, step 1: when to scoop (high leg while you face their upper body) and the knee drop'),
+    JOZEF('single-under-2-forearm.mp4', 'clip 0:20, step 2: forearm on the waist close to the hip, knee to chest'),
+    JOZEF('single-under-3-hand.mp4', 'clip 0:36, step 3: why a thumb-only grip fails; four fingers down, thumb up, elbow bent'),
+    JOZEF('single-under-4-finish.mp4', 'clip 0:17, step 4: the default finish, lift the head and pop the shoulder through'),
+    JOZEF('single-under-5-options.mp4', 'clip 0:11, step 5: from the stack, leg drag, or smash passes if he turns to face you'),
+    JOZEF('single-under-6-dont-turn.mp4', 'clip 0:33, step 6: what not to do, turning away to finish gives him movement to escape'),
+    JOZEF('single-under-7-static.mp4', 'clip 0:31, step 7: full rep, pop the shoulder and finish static; turtling is hard from here'),
+  ],
 };
 // Paste exported JSON from the Quiz tab here to make your edits permanent.
 const MEDIA_OVERRIDES = {};
@@ -937,10 +968,10 @@ function probeLocalMedia() {
   if (!pending) return;
   const done = () => { if (--pending === 0 && deadMedia.size) { rerender(); if (state.mode === 'quiz') newQuiz(); } };
   for (const src of rel) {
-    const img = new Image();
-    img.onload = done;
-    img.onerror = () => { deadMedia.add(src); done(); };
-    img.src = src;
+    const el = isClipSrc(src) ? Object.assign(document.createElement('video'), { preload: 'metadata', muted: true }) : new Image();
+    el[isClipSrc(src) ? 'onloadedmetadata' : 'onload'] = done;
+    el.onerror = () => { deadMedia.add(src); done(); };
+    el.src = src;
   }
 }
 function setMedia(id, list) {
@@ -953,7 +984,9 @@ function ytEmbed(url) {
   const t = url.match(/[?&#](?:t|start)=(\d+)/);
   return `https://www.youtube-nocookie.com/embed/${m[1]}?start=${t ? t[1] : 0}&rel=0`;
 }
-const isVideo = m => !!ytEmbed(m.src || '');
+// Local video files (e.g. img/guangzhou/*.mp4) play inline; like YouTube embeds they never serve as a thumbnail or quiz photo.
+const isClipSrc = src => /\.(mp4|m4v|mov|webm)(\?|#|$)/i.test(src || '');
+const isVideo = m => !!ytEmbed(m.src || '') || isClipSrc(m.src);
 
 // idx is stored per element so prev/next works without global state
 function mediaPanel(id, opts = {}) {
@@ -966,6 +999,8 @@ function mediaPanel(id, opts = {}) {
     const yt = ytEmbed(m.src || '');
     const body = yt
       ? `<div class="aspect-video w-full"><iframe class="w-full h-full rounded" src="${yt}" loading="lazy" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>`
+      : isClipSrc(m.src)
+      ? `<video src="${m.src}" controls playsinline preload="metadata" class="w-full ${compact ? 'aspect-video' : 'max-h-[420px]'} object-contain bg-slate-950 rounded"></video>`
       : `<img src="${m.src}" alt="" loading="lazy" referrerpolicy="no-referrer" class="w-full ${compact ? 'aspect-video object-cover' : 'max-h-[420px] object-contain bg-slate-950'} rounded" onerror="this.parentElement.innerHTML='<div class=\\'aspect-video flex items-center justify-center text-[11px] text-slate-500 border border-dashed border-slate-700 rounded\\'>image failed to load</div>'">`;
     return `<div data-slide="${i}" ${i ? 'hidden' : ''}>${body}</div>`;
   }).join('');
@@ -984,6 +1019,7 @@ function wireMedia(root) {
     const go = d => {
       const i = (Number(p.dataset.idx) + d + n) % n;
       p.dataset.idx = i;
+      p.querySelectorAll('video').forEach(v => v.pause());
       p.querySelectorAll('[data-slide]').forEach(s => s.hidden = Number(s.dataset.slide) !== i);
       p.querySelectorAll('[data-cap]').forEach(s => s.hidden = Number(s.dataset.cap) !== i);
     };
@@ -1058,6 +1094,7 @@ const LINK_ALIASES = [
   ['half-guard', ['Half Guard'], true],
   ['butterfly', ['Butterfly Guard', 'Butterfly'], true],
   ['slx', ['Single Leg X', 'SLX', 'Seated Guard'], true],
+  ['single-under', ['Single Under', 'Scoop Single'], true],
   ['ashi', ['Straight Ashi Garami', 'Straight Ashi', 'Ashi Garami', 'Ashi'], true],
   ['inside-sankaku', ['Inside Sankaku', 'Sankaku', 'Honey Hole', '411'], true],
   ['fifty-fifty', ['50/50'], true],

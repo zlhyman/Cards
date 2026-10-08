@@ -37,6 +37,8 @@ Every `@id`, edge, and grip position must point at an existing node, and grip id
 
 Only openly licensed photos are committed to this repo. Stills from paid instructionals (Submeta, BJJ Fanatics) or YouTube are copyrighted, so they are not committed. For personal study you can screenshot them into an `img/` folder next to `index.html` and point the curate panel at the file. Keep that folder out of git if the repo is public. YouTube clips can be embedded by pasting the video URL with a timestamp; embedding is allowed, copying the frames is not.
 
+A media entry can also be a local video file (`.mp4`, `.m4v`, `.mov`, `.webm`) such as `img/guangzhou/single-under-1-entry.mp4`. It plays inline with controls in the drawer and flashcards and, like a YouTube embed, is never used as a thumbnail or quiz photo, so put a GIF or still first. The Single Under card's step GIFs and clips come from Zachary's own phone video of a class and live in `img/guangzhou/`, which stays out of git with the rest of `img/`.
+
 Every seeded Commons photo was located by file name only and starts as unverified. Open each card, look at the photo, and either mark it verified or replace it. The quiz can be restricted to verified photos.
 
 Positions with no open-license photo found: Butterfly Guard, Single Leg X, Inside Sankaku, 50/50, Knee on Belly. Most gi grips and the wrestling ties also have none.
@@ -44,6 +46,6 @@ Positions with no open-license photo found: Butterfly Guard, Single Leg X, Insid
 ## Design decisions
 
 - Tier and family are independent axes. SLX is filed under Guards but scored Tier 2 because it already controls the knee line.
-- Standing and Turtle form a fifth "hub" family so the roadmap spans Tier 0 to Tier 5 and the turtle wrestle-up / sit-to-guard fork is a first-class node. That makes 17 nodes: the 16 requested plus Standing.
+- Standing and Turtle form a fifth "hub" family so the roadmap spans Tier 0 to Tier 5 and the turtle wrestle-up / sit-to-guard fork is a first-class node. That makes 17 nodes: the 16 requested plus Standing. An 18th, Single Under (Scoop Single Stack), was added in October 2026 from Jozef Chen's Guangzhou intensive; it is a passing position reached from Butterfly / open guard.
 - Grips are a separate deck rather than fields on positions because one grip appears in many positions and the confusion (collar grip vs cross grip vs cross collar) is about the grip itself, not the position.
 - Spaced repetition is a five-box Leitner queue measured in cards rather than days, because a study session is a few minutes long. Intervals are 1, 3, 6, 12, 24 cards.
