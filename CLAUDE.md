@@ -8,6 +8,15 @@ Single-file app: `index.html` (vanilla JS, Tailwind via CDN, no build). `README.
 - Every `@id`, `topNext`, `bottomNext`, and grip `positions` entry must reference an existing node id. Grip ids are prefixed `g-`.
 - Verify in headless Chromium before committing. The scratch script approach that works: build a local Tailwind CSS from `index.html` classes and route `https://cdn.tailwindcss.com` to it in Playwright, then check for page errors, dangling ids, and horizontal overflow at 390px.
 
+## Media storage rules (hard rules from Zachary)
+
+- Never put a video file (.mov, .mp4, .m4v, .avi, .webm or any other video) in the Obsidian Vault. Video there fills the disk and breaks Obsidian Sync. GIFs, still JPEGs and PDFs are allowed in the Vault, kept small.
+- Source videos live permanently in `~/BJJ-Video/<event>/` on snurtlebox, for example `~/BJJ-Video/guangzhou-jozef-chen-2026-10/`. That folder must stay outside the Vault, outside `~/Documents` and `~/Desktop`, and outside every git repo. `~/Ladder-build` is scratch space and is not a permanent home.
+- Trimmed clips and GIFs the app serves go under `img/` in this repo, which is gitignored. Never commit or push anything from `img/` or any video. Most of it is personal-use-only footage.
+- Ladder's GIF scripts default to writing into the Vault. Point every intermediate output (frames, audio, PNG sequences, trimmed MP4s, scrub pages) at `~/Ladder-build` or `~/BJJ-Video` instead.
+- Copy from `~/Downloads`, never move or delete there.
+- Before finishing any media task, run `find <vault> -type f \( -iname '*.mov' -o -iname '*.mp4' -o -iname '*.m4v' -o -iname '*.avi' -o -iname '*.webm' \) -mmin -120` and confirm nothing you created is listed.
+
 ## Open task: fill the photos from the Ladder stills
 
 Say "do the open task" and this is it. Every card needs one verified photo of real people. The sources are on this Mac:
