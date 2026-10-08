@@ -172,8 +172,8 @@
     <div class="grid lg:grid-cols-[1fr_280px] gap-6 items-start">
       <div class="space-y-4">
         <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
-          <div id="quiz-deck-chips" class="flex gap-1.5"></div>
-          <label class="flex items-center gap-2 text-[11px] text-slate-400 cursor-pointer"><input id="quiz-verified-only" type="checkbox" class="accent-slate-300"> verified photos only</label>
+          <div id="quiz-deck-chips" class="flex flex-wrap gap-1.5"></div>
+          <label id="quiz-verified-wrap" class="flex items-center gap-2 text-[11px] text-slate-400 cursor-pointer"><input id="quiz-verified-only" type="checkbox" class="accent-slate-300"> verified photos only</label>
           <span id="quiz-pool" class="text-[11px] text-slate-500"></span>
         </div>
 
@@ -197,7 +197,7 @@
         <div class="rounded-lg border border-slate-800 bg-slate-900/70 p-4">
           <h3 class="text-[10px] uppercase tracking-widest text-slate-500 mb-3">quiz session</h3>
           <dl id="quiz-stats" class="grid grid-cols-3 gap-2 text-center"></dl>
-          <p class="text-[10px] text-slate-600 mt-3 leading-relaxed">step 1 identifies the photo. step 2 asks where top goes and where bottom recovers. the identification answer feeds the same leitner boxes as the flashcards.</p>
+          <p id="quiz-help" class="text-[10px] text-slate-600 mt-3 leading-relaxed">step 1 identifies the photo. step 2 asks where top goes and where bottom recovers. the identification answer feeds the same leitner boxes as the flashcards.</p>
         </div>
         <div class="rounded-lg border border-slate-800 bg-slate-900/70 p-4">
           <h3 class="text-[10px] uppercase tracking-widest text-slate-500 mb-2">photo coverage</h3>
@@ -818,6 +818,28 @@ const MEDIA_SEED = {
     JOZEF('single-under-7-static.mp4', 'clip 0:31, step 7: full rep, pop the shoulder and finish static; turtling is hard from here'),
   ],
 };
+// =====================================================================
+// DATA · CLASS TECHNIQUES (step-by-step sequences from classes, drilled by the Quiz tab's "class prep" deck)
+// =====================================================================
+// Each step is one review card. `gif` is the looping step (its top `band` px carry a burned-in caption, which the
+// quiz hides until you answer); `clip` is the MP4 with the coach's audio, shown after you answer. Media paths are
+// the same private img/ files as MEDIA_SEED; when they are missing the questions still work as text.
+const CLASS_TECHNIQUES = [
+  {
+    id: 'single-under', name: 'Single Under (scoop single)', coach: 'Jozef Chen', where: 'Guangzhou intensive, Oct 2026', cardId: 'single-under', band: 84 / 480,
+    steps: [
+      { cue: 'They put a leg high: drop the knee and scoop the leg', why: 'The trigger is a high leg while you are facing their upper body. If you are facing their hips, go across instead.', gif: 'img/guangzhou/single-under-1-entry.gif', clip: 'img/guangzhou/single-under-1-entry.mp4' },
+      { cue: 'Forearm on the hip, drive their knee to their chest', why: 'A hand alone is easy to strip in no-gi. Wedged at the hip, the forearm is trapped by their own thigh and ribs.', gif: 'img/guangzhou/single-under-2-forearm.gif', clip: 'img/guangzhou/single-under-2-forearm.mp4' },
+      { cue: 'Four fingers behind the far knee, thumb up, elbow bent', why: 'A thumb alone gets pulled through; a straight arm gets straight-armed through.', gif: 'img/guangzhou/single-under-3-hand.gif', clip: 'img/guangzhou/single-under-3-hand.mp4' },
+      { cue: 'Lift the head, pop the shoulder through', why: 'The default finish. Keep the forearm wedge while you do it.', gif: 'img/guangzhou/single-under-4-finish.gif', clip: 'img/guangzhou/single-under-4-finish.mp4' },
+      { cue: 'From the stack: leg drag, or smash pass if they turn to face you', why: 'Choose the follow-up by which way they turn.', clip: 'img/guangzhou/single-under-5-options.mp4' },
+      { cue: 'Do not turn away to finish', why: 'Turning creates movement, and movement is their way out. Take movement away.', clip: 'img/guangzhou/single-under-6-dont-turn.mp4' },
+      { cue: 'Finish static: shoulder through, pin them', why: 'Once the shoulder is through, turtling is very hard for them.', gif: 'img/guangzhou/single-under-7-static.gif', clip: 'img/guangzhou/single-under-7-static.mp4' },
+    ],
+  },
+];
+const PREP_STEPS = CLASS_TECHNIQUES.flatMap(t => t.steps.map((s, i) => ({ ...s, id: `${t.id}#${i + 1}`, n: i + 1, tech: t })));
+
 // Paste exported JSON from the Quiz tab here to make your edits permanent.
 const MEDIA_OVERRIDES = {};
 
@@ -966,7 +988,8 @@ function probeLocalMedia() {
   const rel = [...new Set(all.map(m => m.src).filter(src => src && !/^(https?:)?\/\//i.test(src) && !/^data:/i.test(src)))];
   let pending = rel.length;
   if (!pending) return;
-  const done = () => { if (--pending === 0 && deadMedia.size) { rerender(); if (state.mode === 'quiz') newQuiz(); } };
+  // a class-prep step is rebuilt in place rather than skipped, so a missing gif does not cost it its turn
+  const done = () => { if (--pending === 0 && deadMedia.size) { rerender(); if (state.mode === 'quiz') { if (state.prefs.quizPrep && quiz.cur && quiz.prep) quiz.prep.queue.unshift(quiz.cur); newQuiz(); } } };
   for (const src of rel) {
     const el = isClipSrc(src) ? Object.assign(document.createElement('video'), { preload: 'metadata', muted: true }) : new Image();
     el[isClipSrc(src) ? 'onloadedmetadata' : 'onload'] = done;
@@ -1185,6 +1208,22 @@ function loadJSON(key, fallback) {
   catch { return fallback; }
 }
 function saveJSON(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); } catch {} }
+
+// Class prep runs on calendar days, not cards, so a step comes back before the classes where it matters.
+// A step you recall moves up a box and is due again after PREP_DAYS[box] days; a miss drops it to box 0 (due today).
+const PREP_KEY = 'bjj-state-machine.prep.v1';
+const PREP_DAYS = [0, 1, 3, 7, 14, 30];
+const prepSRS = loadJSON(PREP_KEY, { steps: {} });
+const dayStr = (d = new Date()) => d.toLocaleDateString('en-CA'); // local YYYY-MM-DD
+const addDays = (n) => { const d = new Date(); d.setDate(d.getDate() + n); return dayStr(d); };
+function prepState(id) {
+  if (!prepSRS.steps[id]) prepSRS.steps[id] = { box: 0, due: dayStr(), seen: 0, correct: 0, last: '' };
+  return prepSRS.steps[id];
+}
+// Before class: everything due today, plus anything still shaky (box 0-1) that was not already reviewed today,
+// so weak steps get rehearsed before every class without repeating right after a clean session.
+const prepDue = () => PREP_STEPS.filter(s => { const p = prepState(s.id); return p.due <= dayStr() || (p.box <= 1 && p.last !== dayStr()); });
+const prepNextDue = () => PREP_STEPS.map(s => prepState(s.id).due).filter(d => d > dayStr()).sort()[0] || null;
 
 function cardState(id) {
   if (!state.srs.cards[id]) state.srs.cards[id] = { box: 0, due: 0, seen: 0, correct: 0 };
@@ -1692,7 +1731,101 @@ function distractors(target, kind, n, exclude) {
   return [...shuffle(same), ...shuffle(rest)].slice(0, n);
 }
 
+// ---------- class prep: drill technique steps on a day-based schedule ----------
+function startPrep(practice) {
+  const pool = practice ? PREP_STEPS : prepDue();
+  quiz.prep = { queue: shuffle(pool), misses: {}, asked: 0, right: 0, practice: !!practice };
+}
+function newPrepQuiz() {
+  if (!quiz.prep) startPrep(false);
+  const s = quiz.prep.queue.shift();
+  if (!s) { quiz.cur = null; renderQuiz(); return; }
+  // four options: the right step plus distractors, same technique first
+  const opts = right => {
+    const others = shuffle(PREP_STEPS.filter(x => x.id !== right.id && x.id !== s.id));
+    const pick = [...others.filter(x => x.tech === s.tech), ...others.filter(x => x.tech !== s.tech)].slice(0, 3);
+    return shuffle([right, ...pick]).map(o => ({ id: o.id, label: o.cue, ok: o.id === right.id }));
+  };
+  const at = n => PREP_STEPS.find(x => x.id === `${s.tech.id}#${n}`);
+  const gifOk = !!s.gif && !deadMedia.has(s.gif);
+  const steps = [];
+  if (gifOk) steps.push({ q: `${s.tech.name}: which step is this?`, options: opts(s) });
+  else steps.push({ q: s.n === 1 ? `${s.tech.name}: how does it start?` : `${s.tech.name}: after "${at(s.n - 1).cue}", what comes next?`, options: opts(s) });
+  if (gifOk && at(s.n + 1)) steps.push({ q: `after this step, what comes next?`, options: opts(at(s.n + 1)) });
+  quiz.cur = s; quiz.steps = steps; quiz.step = 0; quiz.answered = false; quiz.idDone = false; quiz.picked = null; quiz.cardOk = true;
+  quiz.photo = gifOk ? s.gif : null;
+  renderQuiz();
+}
+function answerPrep(id) {
+  const st = quiz.steps[quiz.step], s = quiz.cur, P = quiz.prep;
+  const ok = !!st.options.find(o => o.id === id)?.ok;
+  quiz.picked = id; quiz.answered = true; quiz.idDone = true;
+  P.asked++; if (ok) P.right++; else quiz.cardOk = false;
+  if (quiz.step === quiz.steps.length - 1) {
+    if (!P.practice) {
+      const p = prepState(s.id); p.seen++; p.last = dayStr();
+      if (quiz.cardOk) { p.correct++; p.box = Math.min(p.box + 1, PREP_DAYS.length - 1); p.due = addDays(PREP_DAYS[p.box]); }
+      else { p.box = 0; p.due = dayStr(); }
+      saveJSON(PREP_KEY, prepSRS);
+    }
+    // a missed step comes back later in the same session (at most twice)
+    if (!quiz.cardOk && (P.misses[s.id] || 0) < 2) { P.misses[s.id] = (P.misses[s.id] || 0) + 1; P.queue.push(s); }
+  }
+  renderQuiz();
+}
+function renderPrep() {
+  const card = document.getElementById('quiz-card');
+  const empty = document.getElementById('quiz-empty');
+  const due = prepDue().length;
+  document.getElementById('quiz-pool').textContent = `${due} of ${PREP_STEPS.length} steps due or still learning`;
+  renderQuizStats(); renderQuizDeckChips();
+  const btn = 'text-[10px] uppercase tracking-widest text-slate-300 border border-slate-700 hover:border-slate-400 rounded px-3 py-1.5';
+  if (!quiz.cur) {
+    card.hidden = true; empty.hidden = false;
+    const P = quiz.prep, nd = prepNextDue();
+    empty.innerHTML = `<div class="text-slate-300 mb-1">${P && P.asked ? `class prep done: ${P.right}/${P.asked} answers right.` : 'nothing due for class prep.'}</div>
+      <div class="text-[11px]">${due ? `${due} step${due === 1 ? '' : 's'} still due or shaky.` : nd ? `all steps are fresh. next one due ${nd}.` : ''}</div>
+      <div class="mt-4 flex flex-wrap justify-center gap-2">${due ? `<button data-prep="due" class="${btn}">prep again</button>` : ''}<button data-prep="all" class="${btn}">drill every step (schedule unchanged)</button></div>`;
+    empty.querySelectorAll('[data-prep]').forEach(b => b.onclick = () => { startPrep(b.dataset.prep === 'all'); newQuiz(); });
+    return;
+  }
+  card.hidden = false; empty.hidden = true;
+  const s = quiz.cur, t = s.tech, st = quiz.steps[quiz.step], node = NODE_BY_ID[t.cardId];
+  card.className = `rounded-lg border border-slate-700 bg-slate-900/90 p-5 sm:p-7 accent-glow ${quiz.idDone && node ? KINDS.position.cls(node) : ''}`;
+  // the gif's caption band names the step, so it stays clipped off until the first answer
+  document.getElementById('quiz-photo').innerHTML = `
+    ${quiz.photo ? `<div class="mx-auto max-w-[320px] overflow-hidden rounded bg-slate-950"><img src="${quiz.photo}" alt="" class="w-full block" style="margin-top:${quiz.idDone ? 0 : -(t.band * 100).toFixed(2)}%"></div>` : ''}
+    <div class="flex flex-wrap gap-x-3 mt-2 text-[10px] text-slate-500">
+      <span class="text-slate-300">${t.name}</span><span>${t.coach} · ${t.where}</span>
+      ${quiz.idDone ? `<span class="text-slate-400">step ${s.n} of ${t.steps.length}</span>` : ''}
+      <span class="ml-auto">${P_label()}</span>
+    </div>`;
+  document.getElementById('quiz-q').textContent = st.q;
+  const opts = document.getElementById('quiz-options');
+  opts.innerHTML = st.options.map((o, i) => {
+    let cls = 'border-slate-700 text-slate-200 hover:border-slate-400';
+    if (quiz.answered) cls = o.ok ? 'border-emerald-500 text-emerald-300 bg-emerald-500/10' : (o.id === quiz.picked ? 'border-rose-500 text-rose-300 bg-rose-500/10' : 'border-slate-800 text-slate-600');
+    return `<button data-opt="${o.id}" class="text-left text-[13px] px-3 py-2.5 rounded border ${cls} flex items-center gap-3" ${quiz.answered ? 'disabled' : ''}><kbd>${i + 1}</kbd><span>${o.label}</span></button>`;
+  }).join('');
+  opts.querySelectorAll('[data-opt]').forEach(b => b.onclick = () => answerQuiz(b.dataset.opt));
+  const fb = document.getElementById('quiz-feedback');
+  fb.hidden = !quiz.answered;
+  if (quiz.answered) {
+    const ok = st.options.find(o => o.id === quiz.picked)?.ok, right = PREP_STEPS.find(x => x.id === st.options.find(o => o.ok).id);
+    const last = quiz.step === quiz.steps.length - 1, clipOk = last && s.clip && !deadMedia.has(s.clip);
+    const p = prepState(s.id);
+    fb.innerHTML = `<span class="${ok ? 'text-emerald-400' : 'text-rose-400'}">${ok ? 'correct.' : 'no.'}</span> <span class="text-slate-100">step ${right.n}: ${right.cue}.</span> ${right.why}
+      ${clipOk ? `<video src="${s.clip}" controls playsinline preload="metadata" class="mt-3 w-full max-w-[320px] max-h-[420px] bg-slate-950 rounded"></video><div class="text-[10px] text-slate-500 mt-1">step ${s.n} explained by ${t.coach}</div>` : ''}
+      ${last && !quiz.prep.practice ? `<div class="text-[10px] text-slate-500 mt-2">${quiz.cardOk ? `next review ${p.due} (box ${p.box})` : 'back to box 0: it comes round again this session and next time you prep'}</div>` : ''}`;
+  }
+  document.getElementById('quiz-next').hidden = !quiz.answered;
+  document.getElementById('quiz-next').innerHTML = (quiz.step < quiz.steps.length - 1 ? 'next question' : 'next step') + ' <kbd class="border-slate-400 text-slate-700">space</kbd>';
+  document.getElementById('quiz-detail').hidden = !quiz.idDone;
+}
+const P_label = () => `${quiz.prep.queue.length} left${quiz.prep.practice ? ' · practice' : ''}`;
+
 function newQuiz() {
+  if (state.prefs.quizPrep) return newPrepQuiz();
   const pool = quizPool().filter(c => !quiz.cur || c.id !== quiz.cur.id);
   const src = pool.length ? pool : quizPool();
   if (!src.length) { quiz.cur = null; renderQuiz(); return; }
@@ -1716,6 +1849,12 @@ function newQuiz() {
 }
 
 function renderQuiz() {
+  document.getElementById('quiz-help').textContent = state.prefs.quizPrep
+    ? 'class prep drills each step of the techniques from class: name the step from its gif, then say what comes next. a step you get right comes back after 1, 3, 7, 14, then 30 days; a miss brings it back today. run it before each class: it covers everything due plus any step still shaky.'
+    : 'step 1 identifies the photo. step 2 asks where top goes and where bottom recovers. the identification answer feeds the same leitner boxes as the flashcards.';
+  document.getElementById('quiz-verified-wrap').hidden = !!state.prefs.quizPrep;
+  if (state.prefs.quizPrep) return renderPrep();
+  document.getElementById('quiz-empty').textContent = 'no cards with photos match the current filters. add photos in the curate panel of any card.';
   const card = document.getElementById('quiz-card');
   const empty = document.getElementById('quiz-empty');
   document.getElementById('quiz-pool').textContent = `${quizPool().length} cards with photos in pool`;
@@ -1764,6 +1903,7 @@ function quizWatchLinks(c, st) {
 }
 function answerQuiz(id) {
   if (!quiz.cur || quiz.answered) return;
+  if (state.prefs.quizPrep) return answerPrep(id);
   const st = quiz.steps[quiz.step];
   const ok = !!st.options.find(o => o.id === id)?.ok;
   quiz.picked = id; quiz.answered = true;
@@ -1784,10 +1924,12 @@ function quizAdvance() {
   else newQuiz();
 }
 function renderQuizStats() {
-  const q = quiz.session;
-  document.getElementById('quiz-stats').innerHTML = [
+  const q = quiz.session, P = quiz.prep;
+  document.getElementById('quiz-stats').innerHTML = (state.prefs.quizPrep ? [
+    ['answers', P ? P.asked : 0], ['right', P && P.asked ? Math.round(100 * P.right / P.asked) + '%' : '—'], ['left', P ? P.queue.length + (quiz.cur ? 1 : 0) : 0],
+  ] : [
     ['photos', q.asked], ['identified', q.asked ? Math.round(100 * q.right / q.asked) + '%' : '—'], ['routes', q.routeAsked ? Math.round(100 * q.routeRight / q.routeAsked) + '%' : '—'],
-  ].map(([k, v]) => `<div><dt class="text-[10px] uppercase tracking-widest text-slate-500">${k}</dt><dd class="text-lg text-slate-100">${v}</dd></div>`).join('');
+  ]).map(([k, v]) => `<div><dt class="text-[10px] uppercase tracking-widest text-slate-500">${k}</dt><dd class="text-lg text-slate-100">${v}</dd></div>`).join('');
   const cov = (arr, label) => {
     const withP = arr.filter(c => mediaFor(c.id).some(m => !isVideo(m)));
     const ver = arr.filter(c => mediaFor(c.id).some(m => !isVideo(m) && m.verified));
@@ -1801,12 +1943,15 @@ function renderQuizDeckChips() {
   const root = document.getElementById('quiz-deck-chips');
   root.innerHTML = '';
   for (const [v, l] of [['positions', 'positions'], ['grips', 'grips'], ['both', 'both']]) {
-    root.appendChild(chip(l, state.prefs.deck === v, '', () => { state.prefs.deck = v; saveJSON(PREF_KEY, state.prefs); rerender(); newQuiz(); }));
+    root.appendChild(chip(l, !state.prefs.quizPrep && state.prefs.deck === v, '', () => { state.prefs.deck = v; state.prefs.quizPrep = false; quiz.cur = null; saveJSON(PREF_KEY, state.prefs); rerender(); newQuiz(); }));
   }
+  // class prep: technique steps on their own day-based schedule (see CLASS_TECHNIQUES)
+  const due = prepDue().length;
+  root.appendChild(chip(`class prep${due ? ` · ${due}` : ''}`, !!state.prefs.quizPrep, '', () => { state.prefs.quizPrep = true; quiz.prep = null; quiz.cur = null; saveJSON(PREF_KEY, state.prefs); rerender(); newQuiz(); }, 'drill the steps of techniques from class before your next class'));
 }
 document.getElementById('quiz-verified-only').onchange = e => { quiz.verifiedOnly = e.target.checked; newQuiz(); };
 document.getElementById('quiz-next').onclick = quizAdvance;
-document.getElementById('quiz-detail').onclick = () => quiz.cur && openDrawer(quiz.cur.id);
+document.getElementById('quiz-detail').onclick = () => quiz.cur && openDrawer(quiz.cur.tech ? quiz.cur.tech.cardId : quiz.cur.id);
 document.getElementById('media-export').onclick = () => {
   const ta = document.getElementById('media-json');
   ta.value = JSON.stringify(mediaLocal, null, 2); ta.select();
